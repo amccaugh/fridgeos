@@ -1,0 +1,407 @@
+title = "CRC CMD - SW-R"
+#This toml file should deal with routing sensors messages. What those messages are doesn't shouldnt matter here
+[communications]
+
+[hardware]
+
+    [hardware.thermometers]
+        
+            [hardware.thermometers.3HEADA]
+            # Name of Sensor
+            name = '3HEADA'
+            # Cycle id - prob not useful for the server toml, should only be state machine toml
+            cycle_id = 'A'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'ROX6951'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '1' #FIXME
+                [hardware.thermometers.3HEADA.commands]
+                reset = 'RESET'   
+                set_enable = 'ENABLE' 
+                set_disable = 'DISABLE'  
+                get_current_reading = 'R?'   
+                get_running_average = 'RA?'   
+                geT_last_reading = 'LAST?'  
+                get_bias = 'BIAS?'  
+                set_bias'BIAS'    
+    
+            [hardware.thermometers.4HEADA]
+            # Name of Sensor
+            name = '4HEADA'
+            # Cycle id
+            cycle_id = 'A'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'ROX6951'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '2' #FIXME
+                [hardware.thermometers.4HEADA.commands]
+                reset = 'RESET'   
+                set_enable = 'ENABLE' 
+                set_disable = 'DISABLE'  
+                get_current_reading = 'R?'   
+                get_running_average = 'RA?'   
+                geT_last_reading = 'LAST?'  
+                get_bias = 'BIAS?'  
+                set_bias'BIAS'                
+            [hardware.thermometers.3HEADB]
+            # Name of Sensor
+            name = '3HEADB'
+            # Cycle id
+            cycle_id = 'B'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'ROX6951'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '3' #FIXME
+                [hardware.thermometers.3HEADB.commands]
+                reset = 'RESET'   
+                set_enable = 'ENABLE' 
+                set_disable = 'DISABLE'  
+                get_current_reading = 'R?'   
+                get_running_average = 'RA?'   
+                geT_last_reading = 'LAST?'  
+                get_bias = 'BIAS?'  
+                set_bias'BIAS'      
+            [hardware.thermometers.4HEADB]
+            # Name of Sensor
+            name = '4HEADB'
+            # Cycle id
+            cycle_id = 'B'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'ROX6951'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '4' #FIXME
+                [hardware.thermometers.4HEADB.commands]
+                reset = 'RESET'   
+                set_enable = 'ENABLE' 
+                set_disable = 'DISABLE'  
+                get_current_reading = 'R?'   
+                get_running_average = 'RA?'   
+                geT_last_reading = 'LAST?'  
+                get_bias = 'BIAS?'  
+                set_bias'BIAS'              
+            [hardware.thermometers.dhead]
+            # Name of Sensor
+            name = 'DHEAD'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'RO600'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '2'#FIXME
+            mux_address = '1' #FIXME
+            
+            [hardware.thermometers.still]
+            # Name of Sensor
+            name = 'STILL'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'RuO2mean'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '2'#FIXME
+            mux_address = '2' #FIXME
+            
+            [hardware.thermometers.condenser]
+            # Name of Sensor
+            name = 'CONDENSER'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'RuO2mean'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'lockins'
+            has_mux = 'True'
+            mux_name = '2'#FIXME
+            mux_address = '3' #FIXME
+        
+            [hardware.thermometers.4pumpa]
+            # Name of Sensor
+            name = '4PUMPA'
+            # Cycle id
+            cycle_id = 'A'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '1' #FIXME
+            
+            [hardware.thermometers.3pumpa]
+            # Name of Sensor
+            name = '3PUMPA'
+            # Cycle id
+            cycle_id = 'A'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '2' #FIXME
+            
+            [hardware.thermometers.4pumpb]
+            # Name of Sensor
+            name = '4PUMPB'
+            # Cycle id
+            cycle_id = 'B'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '3' #FIXME
+            
+            [hardware.thermometers.3pumpb]
+            # Name of Sensor
+            name = '3PUMPB'
+            # Cycle id
+            cycle_id = 'B'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '4' #FIXME
+            
+            [hardware.thermometers.3switcha]
+            # Name of Sensor
+            name = '3SWITCHA'
+            # Cycle id
+            cycle_id = 'A'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '5' #FIXME
+            
+            [hardware.thermometers.4switcha]
+            # Name of Sensor
+            name = '4SWITCHA'
+            # Cycle id
+            cycle_id = 'A'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '6' #FIXME
+            
+            [hardware.thermometers.4switchb]
+            # Name of Sensor
+            name = '4SWITCHB'
+            # Cycle id
+            cycle_id = 'B'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '7' #FIXME
+            
+            [hardware.thermometers.3switchb]
+            # Name of Sensor
+            name = '3SWITCHB'
+            # Cycle id
+            cycle_id = 'B'
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'DC-2018'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '8' #FIXME
+            
+            [hardware.thermometers.40k]
+            # Name of Sensor
+            name = '40K'
+            # Cycle id
+            cycle_id = ''
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'FIXME'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '9' #FIXME
+            
+            [hardware.thermometers.4k]
+            # Name of Sensor
+            name = '4K'
+            # Cycle id
+            cycle_id = ''
+            # Calibration file name I dont think this toml file requires it. Only the Statemachine toml file should have it....
+            calibration = 'FIXME'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'diodes'
+            has_mux = 'True'
+            mux_name = '1'#FIXME
+            mux_address = '10' #FIXME
+            
+    [hardware.heaters]
+            [hardware.heaters.4pumpa]
+            # Name of Sensor
+            name = '4PUMPA'
+            # Cycle id
+            cycle_id = 'A'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '1' #FIXME
+            
+            [hardware.heaters.4pumpb]
+            # Name of Sensor
+            name = '4PUMPB'
+            # Cycle id
+            cycle_id = 'B'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '2' #FIXME
+            
+            [hardware.heaters.3pumpa]
+            # Name of Sensor
+            name = '3PUMPA'
+            # Cycle id
+            cycle_id = 'A'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '3' #FIXME
+            
+            [hardware.heaters.3pumpb]
+            # Name of Sensor
+            name = '3PUMPB'
+            # Cycle id
+            cycle_id = 'B'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '4' #FIXME
+            
+    [hardware.switches]
+            [hardware.switches.4switcha]
+            # Name of Sensor
+            name = '4SWITCHA'
+            # Cycle id
+            cycle_id = 'A'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '1' #FIXME
+            
+            [hardware.switches.4switchb]
+            # Name of Sensor
+            name = '4SWITCHB'
+            # Cycle id
+            cycle_id = 'B'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '2' #FIXME
+            [hardware.switches.3switcha]
+            # Name of Sensor
+            name = '3SWITCHB'
+            # Cycle id
+            cycle_id = 'A'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '3' #FIXME
+            [hardware.switches.3switchb]
+            # Name of Sensor
+            name = '3SWITCHB'
+            # Cycle id
+            cycle_id = 'B'
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '4' #FIXME
+            [hardware.switches.still]
+            # Name of Sensor
+            name = 'STILL'
+            # Cycle id
+            cycle_id = ''
+            # USB devices that use serial should be named USB or serial for interface type. Others could be GPIB or RS232?
+            interface_type = 'USB'
+            # Interface name is the persistant USB name
+            interface_name = 'heaters'
+            has_mux = 'False'
+            mux_name = ''#FIXME
+            mux_address = '5' #FIXME
+    [hardware.warmupHeaters]
+        

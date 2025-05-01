@@ -1,0 +1,96 @@
+[wait_for_heat_switches_to_cool]
+temperature_thresholds = {'4SWITCHA'= 7, '3SWITCHA' = 7, '4SWITCHB' = 7, '3SWITCHB' = 7, '4K' = 5}
+heaters = {}
+relays = {} 
+
+[turn_on_all_pumps]
+temperature_thresholds = {'4HEADA'= 6, '3HEADA' = 6, '4HEADB' = 6, '3HEADB' = 6}
+heaters = {'4PUMPA' = {pid_set_value = 45},'3PUMPA' = {pid_set_value = 45},'4PUMPB' = {pid_set_value = 45}, '3PUMPB' = {pid_set_value = 45}}            
+relays = {} 
+
+
+[turn_on_4_heat_switches]
+temperature_thresholds = {'3HEADA' = 1.55, '3HEADB' = 1.55}
+heaters = {'3PUMPA' = {pid_set_value = 45}, '3PUMPB' = {pid_set_value = 45}}
+relays = {'4SWITCHA' = {pid_set_value = 22}, '4SWITCHB' = {pid_set_value = 22}} 
+
+
+[turn_on_3_heat_switches]
+temperature_thresholds = {}
+heaters = {}
+relays = {'4SWITCHA' = {pid_set_value = 22, elapse_time_max =1300}, '4SWITCHB' = {pid_set_value = 22, elapse_time_max =1300}, '3SWITCHA' = {pid_set_value = 22, elapse_time_max =1300}, '3SWITCHB' = {pid_set_value = 22, elapse_time_max =1300}}
+
+
+[start_cycle_A]
+temperature_thresholds = {'4SWITCHA'= 12, '3SWITCHA' = 12}
+heaters = {}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}} 
+
+[get_pump_warm_A]
+temperature_thresholds = {}
+heaters = {'4PUMPA' = {pid_set_value = 15, elapse_time_max = 180}, '3PUMPA' = {pid_set_value = 15, elapse_time_max = 180}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}}
+
+[get_pumps_hot_A]
+temperature_thresholds = {}
+heaters = {'4PUMPA' = {pid_set_value = 45, elapse_time_max = 1800}, '3PUMPA' = {pid_set_value = 45}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}}
+
+[turn_on_heat_switch_4_A]
+temperature_thresholds = {'4HEADA' = 1, '3HEADA' = 6}
+heaters = {'3PUMPA' = {pid_set_value = 45, elapse_time_max = 2400}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}, '4SWITCHA' = {pid_set_value = 22}}
+
+[turn_on_heat_switch_3_A]
+temperature_thresholds = {'STILL' = 0.4, 'DHEAD' = 0.6}
+heaters = {}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}, '4SWITCHA' = {pid_set_value = 22, elapse_time_max = 900}, '3SWITCHA' = {pid_set_value = 22, elapse_time_max = 900}}
+
+[start_cycle_B]
+temperature_thresholds = {'4SWITCHB'= 12, '3SWITCHB' = 12}
+heaters = {}
+relays = {'4SWITCHA' = {pid_set_value = 22}, '3SWITCHA' = {pid_set_value = 22}} 
+
+[get_pump_warm_B]
+temperature_thresholds = {}
+heaters = {'4PUMPB' = {pid_set_value = 15, elapse_time_max = 180}, '3PUMPB' = {pid_set_value = 15, elapse_time_max = 180}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}}
+
+[get_pumps_hot_B]
+temperature_thresholds = {}
+heaters = {'4PUMPB' = {pid_set_value = 45, elapse_time_max =1800}, '3PUMPB' = {pid_set_value = 45, elapse_time_max =1800}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}}
+
+[turn_on_heat_switch_4_B]
+temperature_thresholds = {'4HEADB' = 1, '3HEADB' = 6}
+heaters = {'3PUMPB' = {pid_set_value = 45, elapse_time_max = 1500}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}, '4SWITCHA' = {pid_set_value = 22}}
+
+[turn_on_heat_switch_3_B]
+temperature_thresholds = {'STILL' = 0.4, 'DHEAD' = 0.6}
+heaters = {}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}, '4SWITCHA' = {pid_set_value = 22, elapse_time_max = 900}, '3SWITCHA' = {pid_set_value = 22, elapse_time_max = 900}}
+
+[turn_on_still_heater]
+temperature_thresholds = {}
+heaters = {'STILLHEATER' = {pid_set_value = 6}}
+relays = {'4SWITCHB' = {pid_set_value = 22}, '3SWITCHB' = {pid_set_value = 22}, '4SWITCHA' = {pid_set_value = 22}, '3SWITCHA' = {pid_set_value = 22}}
+
+[misc]
+state_machine_cycle_time = 1
+start_recycle_temp = 1.75
+start_recycle_clock_hour = 6
+start_recycle_clock_min = 1
+
+[pid_configuration]
+4PUMPA = {kp = 10, ki = 1, kd = 0}
+3PUMPA = {kp = 10, ki = 1, kd = 0}
+4PUMPB = {kp = 10, ki = 1, kd = 0}
+3PUMPB = {kp = 10, ki = 1, kd = 0}
+4SWITCHA = {kp = 10, ki = 1, kd = 0}
+4SWITCHB = {kp = 10, ki = 1, kd = 0}
+3SWITCHA = {kp = 10, ki = 1, kd = 0}
+3SWITCHB = {kp = 10, ki = 1, kd = 0}
+STILLHEATER = {kp = 10, ki = 1, kd = 0}
+    
+

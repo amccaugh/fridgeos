@@ -1,0 +1,153 @@
+[[thermometers]]
+name = '3HEADA'
+hardware = 'swarm'
+calibration_file = '/swarm/ROX6951.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = '4HEADA'
+hardware = 'swarm'
+calibration_file = '/swarm/ROX6951.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = '3HEADB'
+hardware = 'swarm'
+calibration_file = '/swarm/ROX6951.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = '4HEADB'
+hardware = 'swarm'
+calibration_file = '/swarm/ROX6951.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = 'DHEAD'
+hardware = 'swarm'
+calibration_file = '/swarm/RO600.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = 'STILL'
+hardware = 'swarm'
+calibration_file = '/swarm/RuO2mean.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = 'CONDENSER'
+hardware = 'swarm'
+calibration_file = '/swarm/RuO2mean.csv'
+interface = '/dev/lockins'
+
+[[thermometers]]
+name = '4PUMPA'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+[[thermometers]]
+name = '4PUMPB'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+[[thermometers]]
+name = '3PUMPA'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+[[thermometers]]
+name = '3PUMPB'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+[[thermometers]]
+name = '4SWITCHA'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+[[thermometers]]
+name = '4SWITCHB'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+
+[[thermometers]]
+name = '3SWITCHA'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+
+[[thermometers]]
+name = '3SWITCHB'
+hardware = 'swar'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+
+[[thermometers]]
+name = '40K'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+
+[[thermometers]]
+name = '4K'
+hardware = 'swarm'
+calibration_file = '/swarm/DT670.csv'
+interface = '/dev/diodes'
+
+
+[[heaters]]
+name = '4PUMPA'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[heaters]]
+name = '4PUMPB'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[heaters]]
+name = '3PUMPA'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[heaters]]
+name = '3PUMPB'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[switches]]
+name = '4SWITCHA'
+hardware = 'swarm'
+interface = '/dev/heaters'
+[[switches]]
+name = '4SWITCHB'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[switches]]
+name = '3SWITCHA'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[switches]]
+name = '3SWITCHB'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[switches]]
+name = 'STILL'
+hardware = 'swarm'
+interface = '/dev/heaters'
+
+[[warmupHeaters]]
+

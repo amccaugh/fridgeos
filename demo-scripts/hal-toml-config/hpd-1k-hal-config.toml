@@ -1,0 +1,60 @@
+[[thermometers]]
+name = "1K"
+hardware = "srs-sim921"
+# Arguments that will be passed to setup() in the hardware driver
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 2
+
+[[thermometers]]
+name = "4K"
+hardware = "srs-sim922"
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 4
+setup.channel = 1
+
+[[thermometers]]
+name = "40K"
+hardware = "srs-sim922"
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 4
+setup.channel = 2
+
+[[thermometers]]
+name = "1K-main-plate"
+hardware = "srs-sim922"
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 1
+setup.channel = 1
+
+[[thermometers]]
+name = "1K-film-burner"
+hardware = "srs-sim922"
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 1
+setup.channel = 2
+
+[[thermometers]]
+name = "1K-pump"
+hardware = "srs-sim922"
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 1
+setup.channel = 3
+
+[[thermometers]]
+name = "1K-switch"
+hardware = "srs-sim922"
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0-port0"
+setup.slot = 1
+setup.channel = 4
+
+[[heaters]]
+name = "1K-switch"
+hardware = "korad-kd3005p"
+max_value = 5
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.0"
+
+[[heaters]]
+name = "1K-pump"
+hardware = "korad-kd3005p"
+max_value = 25
+setup.address = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:2:1.0"

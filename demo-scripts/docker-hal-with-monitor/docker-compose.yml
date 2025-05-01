@@ -1,0 +1,21 @@
+version: "3"
+services:
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./config:/app/config/
+      - ./logs:/app/logs/
+    command: ["python", "monitor-server.py"]
+    restart: always
+  hal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./config:/app/config/
+      - ./logs:/app/logs/
+    command: ["python", "hal-server.py"]
+    restart: always
+
