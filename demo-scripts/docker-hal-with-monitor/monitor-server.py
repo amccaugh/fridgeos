@@ -1,8 +1,12 @@
 #%%
 from fridgeos import MonitorServer
+import tomllib
+
+with open('./config/monitor.toml', "rb") as f:
+    name = tomllib.load(f)['name']
 
 
-monitor_server = MonitorServer(cryostat_name = 'mycryo',
+monitor_server = MonitorServer(cryostat_name = name,
                                http_port = 8000,
                                hal_ip = 'hal',
                                hal_port = 5555,
