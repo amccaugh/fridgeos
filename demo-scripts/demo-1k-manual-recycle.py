@@ -14,43 +14,57 @@ pump_pid = PID(10, 0, 0, setpoint=50)
 pump_pid.output_limits = (0, heater_max_values['1K-pump'])
 
 
-#%%
-
 def wait_until_hour(target_hour):
     while True:
         current_hour = time.localtime().tm_hour
-        if current_hour == target_hour:
-            break
         current_minute = time.localtime().tm_min
         print(f'Current hour: {current_hour} and minute: {current_minute}, waiting until {target_hour}')
-        time.sleep(5*60)  # Check every minute
-
-wait_until_hour(7)
-
-# Heat up the pump
-hal_client.set_heater_value('1K-switch', 0)
-hal_client.set_heater_value('1K-pump', 25)
-time.sleep(60*10)
-
-
+        if current_hour == target_hour and current_minute < 30:
+            break
+        time.sleep(5*60)  # Check every 5 minutes
+#%%
 
 metrics_dict = monitor_client.get_metrics()
-temperatures = metrics_dict['temperatures']
-# Heat pump to 50K until 1K stage is cold, turning off switch if it gets too hot
-while temperatures['1K'] > 5:
-    # If the switch is between 9-10K, scale down the pump heater value
-    # switch_factor = np.clip(10-temperatures['1K-switch'], 0, 1)
-    switch_factor = 1
-    new_pid_heater_value = pump_pid(temperatures['1K-pump'])
-    new_heater_value = new_pid_heater_value*switch_factor
-    hal_client.set_heater_value('1K-pump', new_heater_value)
-    print(f'Setting 1K-pump to {new_heater_value}')
-    time.sleep(1)
-    metrics_dict = monitor_client.get_metrics()
-    temperatures = metrics_dict['temperatures']
-    print(temperatures)
 
-# Let pump cool down
-print('Done heating pump, turning switch on')
-hal_client.set_heater_value('1K-pump', 0)
-hal_client.set_heater_value('1K-switch', 4)
+while True:
+    wait_until_hour(7)
+    print('It is time, warm it up')
+    # Heat up the pump
+    hal_client.set_heater_value('1K-switch', 0)
+    hal_client.set_heater_value('1K-pump', 25)
+    # time.sleep(60*90)
+    time_start=time.time()  # Start timer
+    while time.time()-time_start < 60*90:
+        try:
+            metrics_dict = monitor_client.get_metrics()
+        except:
+            pass
+        temperatures = metrics_dict['temperatures']
+        new_heater_value = pump_pid(temperatures['1K-pump'])
+        hal_client.set_heater_value('1K-pump', new_heater_value)
+        print(f'Setting 1K-pump to {new_heater_value}')
+        print(f'1K temperature: {temperatures["1K"]}')
+        time.sleep(60)
+    # temperatures = metrics_dict['temperatures']
+    # # Heat pump to 50K until 1K stage is cold, turning off switch if it gets too hot
+    # hal_client.set_heater_value('1K-switch', 0)
+    # print(f'1K temperature: {temperatures["1K"]}')
+    # while temperatures['1K'] > 4.75:
+    #     print(f'Waiting for 1K t cool, current temperature: {temperatures["1K"]}')
+    #     # If the switch is between 9-10K, scale down the pump heater value
+    #     # switch_factor = np.clip(10-temperatures['1K-switch'], 0, 1)
+    #     new_heater_value = pump_pid(temperatures['1K-pump'])
+    #     hal_client.set_heater_value('1K-pump', new_heater_value)
+    #     print(f'Setting 1K-pump to {new_heater_value}')
+    #     time.sleep(30)
+    #     try:
+    #         metrics_dict = monitor_client.get_metrics()
+    #     except:
+    #         pass
+    #     temperatures = metrics_dict['temperatures']
+
+    # Let pump cool down
+    print('Done heating pump, turning switch on')
+    hal_client.set_heater_value('1K-pump', 0)
+    hal_client.set_heater_value('1K-switch', 4)
+    time.sleep(60)
