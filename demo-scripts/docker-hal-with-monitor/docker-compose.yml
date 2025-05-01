@@ -1,4 +1,3 @@
-version: "3"
 services:
   monitor:
     build:
@@ -9,13 +8,17 @@ services:
       - ./logs:/app/logs/
     command: ["python", "monitor-server.py"]
     restart: always
+    ports:
+      - "8000:8000"
   hal:
     build:
       context: .
       dockerfile: Dockerfile
+    privileged: true  # Grants access to all devices including USB
     volumes:
       - ./config:/app/config/
       - ./logs:/app/logs/
+      - /dev/serial:/dev/serial # Allow access to the serial devices
     command: ["python", "hal-server.py"]
     restart: always
 
