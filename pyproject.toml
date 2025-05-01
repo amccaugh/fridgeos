@@ -19,6 +19,9 @@ dependencies = [
 "pyzmq",
 ]
 
+[project.urls]
+Homepage = "https://github.com/amccaugh/fridgeos"
+
 #[tool.setuptools]
 #packages = ["hal", "monitor", "scraper", "statemachine", "zmqhelper"]
 
