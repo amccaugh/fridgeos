@@ -19,7 +19,6 @@ services:
       - ./config:/app/config/
       - ./logs:/app/logs/
       - /dev/serial:/dev/serial # Allow access to the serial devices
-      - /dev/:/dev/
     command: ["python", "hal-server.py"]
     restart: always
 
