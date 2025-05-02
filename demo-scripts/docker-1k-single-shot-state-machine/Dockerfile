@@ -4,5 +4,4 @@ WORKDIR /app
 
 RUN pip install fridgeos
 
-COPY hal-server.py /app/hal-server.py
-COPY monitor-server.py /app/monitor-server.py
+COPY sm-1k.py /app/sm-1k.py
