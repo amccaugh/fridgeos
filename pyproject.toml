@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fridgeos"
-version = "0.1.2"
+version = "0.1.3"
 description = "Simple, easy-to-use control software for cryostats"
 authors = [
     { name = "Adam McCaughan", email = "adam.mccaughan@nist.gov"},
@@ -17,6 +17,8 @@ dependencies = [
 "requests",
 "pyserial",
 "pyzmq",
+"python-statemachine",
+"simple_pid"
 ]
 
 [project.urls]
