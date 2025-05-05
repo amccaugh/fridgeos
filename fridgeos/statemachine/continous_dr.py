@@ -6,13 +6,9 @@ Created on Wed Sep 11 12:25:56 2024
 """
 #%%
 from statemachine import State, StateMachine
-from statemachine.contrib.diagram import DotGraphMachine
 import asyncio
-import json
 import time
-import requests
 import tomllib
-import fridgeos.zmqhelper as zmqh
 
 #from timer import ElapsedTime
 from simple_pid import PID
@@ -579,17 +575,3 @@ class ElapsedTime:
 
         elapsed = time.time() - self.start_time
         return max(0, self.threshold_seconds - elapsed)
-        
-    
-#%%
-graph = DotGraphMachine(crc_cmd)  # also accepts instances
-
-dot = graph()
-
-dot.to_string()  
-
-dot.write_png(fr'C:\Users\rdm8\Downloads\test.png')
- 
-
-    
-#%%

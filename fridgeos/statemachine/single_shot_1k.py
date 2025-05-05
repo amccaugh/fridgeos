@@ -1,11 +1,7 @@
 # %%
 from statemachine import State, StateMachine
-#from statemachine.contrib.diagram import DotGraphMachine
-import json
 import time
-import requests
 import tomllib
-import fridgeos.zmqhelper as zmqh
 from simple_pid import PID
 
 class Single_shot_1k(StateMachine):
