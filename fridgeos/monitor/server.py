@@ -2,7 +2,7 @@ import json
 import threading 
 import time
 import datetime
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import fridgeos.zmqhelper as zmqhelper
 from fridgeos import HALClient
 
@@ -19,7 +19,7 @@ class S(BaseHTTPRequestHandler):
 class SimpleJSONhttpserver:
     def __init__(self, ip_address="localhost", port=8000):
         self.json_dict = {}
-        self.httpd = HTTPServer((ip_address, port), S)
+        self.httpd = ThreadingHTTPServer((ip_address, port), S)
         self.httpd.json_dict = self.json_dict
         self.thread = threading.Thread(target=self.httpd.serve_forever, args=())
         self.thread.start()
