@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     privileged: true  # Grants access to all devices including USB
+    ports:
+      - "8000:8000"
+      - "5555:5555"
     volumes:
       - ./config:/app/config/
       - ./logs:/app/logs/
