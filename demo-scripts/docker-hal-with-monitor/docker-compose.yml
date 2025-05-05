@@ -20,5 +20,7 @@ services:
       - ./logs:/app/logs/
       - /dev/serial:/dev/serial # Allow access to the serial devices
     command: ["python", "hal-server.py"]
+    ports:
+      - "5555:5555"
     restart: always
 
