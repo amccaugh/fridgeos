@@ -6,7 +6,6 @@ Created on Wed Sep 11 12:25:56 2024
 """
 #%%
 from statemachine import State, StateMachine
-import asyncio
 import time
 import tomllib
 
@@ -347,26 +346,8 @@ class crc_cmd(StateMachine):
         return response
 
     #-----------------------------------------------------------------------------------------------------#
-    # Async functions for the state machine
+    # Functions for starting and stopping the state machine
     #------------------------------------------------------------------------------------------------------#
-    async def turn_on_state_machine(self):
-        # Starts state machine cycle
-        self.cycle_running = True
-        await self.run_cycle()
-    async def turn_off_state_machine(self):
-        # Stops state machine cycle
-        self.cycle_running = False
-    async def run_cycle(self):
-        # Loop which runs the state machine
-        while self.cycle_running:
-            # Update the temperatures inside the state machine
-            self.update_fridge_state()
-            # Run the state machine to check if we should move to the next state or not
-            # If we move to a new state, update the list of currently-in-use PIDs
-            self.cycle()
-            # Scan through the list of currently-in-use PIDs and update their setpoints
-            self.update_pid_values()
-            await asyncio.sleep(self.state_machine_cycle_time)
     
     def non_async__turn_on_state_machine(self):
         # Starts state machine cycle
