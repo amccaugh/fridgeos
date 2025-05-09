@@ -1,16 +1,20 @@
 services:
-  hal:
+  sm_1k:
     build:
       context: .
       dockerfile: Dockerfile
     privileged: true  # Grants access to all devices including USB
-    ports:
-      - "8000:8000"
-      - "5555:5555"
     volumes:
       - ./config:/app/config/
       - ./logs:/app/logs/
       - /dev/serial:/dev/serial # Allow access to the serial devices
     command: ["python", "sm-1k.py"]
     restart: always
+    networks:
+      - fridgeosnetwork
+
+networks:
+  fridgeosnetwork:
+    external: true
+    name: shared-fridgeosnetwork
 
