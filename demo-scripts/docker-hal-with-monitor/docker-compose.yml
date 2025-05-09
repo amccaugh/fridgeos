@@ -10,6 +10,9 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    networks:
+      - fridgeosnetwork  # Ensure this is the same network as in app2
+
   hal:
     build:
       context: .
@@ -18,9 +21,14 @@ services:
     volumes:
       - ./config:/app/config/
       - ./logs:/app/logs/
-      - /dev/serial:/dev/serial # Allow access to the serial devices
+      - /dev/serial:/dev/serial/  # Allow access to the serial devices
     command: ["python", "hal-server.py"]
     ports:
       - "5555:5555"
     restart: always
+    networks:
+      - fridgeosnetwork  # Ensure this is the same network as in app2
 
+networks:
+  fridgeosnetwork:
+    name: shared-fridgeosnetwork
