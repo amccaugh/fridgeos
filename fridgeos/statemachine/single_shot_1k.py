@@ -104,11 +104,8 @@ class Single_shot_1k(StateMachine):
     #------------------------------------------------------------------------------------------------------#
     def update_fridge_state(self):
         #self.fridge_state = self.query_metric_server()
-        fridge_data, success = self.monitor_client.get_metrics()
-        if success:
-            self.fridge_state = fridge_data
-        elif not success:
-            print('Failed to get fridge state from monitor server')
+        fridge_data = self.monitor_client.get_metrics()
+        self.fridge_state = fridge_data
         self.dt = self.fridge_timer()[1]
         self.fridge_timer.reset()
 
