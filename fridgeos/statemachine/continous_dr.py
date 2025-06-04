@@ -349,11 +349,11 @@ class crc_cmd(StateMachine):
     # Functions for starting and stopping the state machine
     #------------------------------------------------------------------------------------------------------#
     
-    def non_async__turn_on_state_machine(self):
+    def turn_on_state_machine(self):
         # Starts state machine cycle
         self.cycle_running = True
         self.non_async_run_cycle()
-    def non_async__turn_off_state_machine(self):    
+    def turn_off_state_machine(self):    
         # Stops state machine cycle
         self.cycle_running = False
     def non_async_run_cycle(self):
