@@ -1,2 +1,0 @@
-pyzmq
-git+git://github.com/kshalm/zmqhelpers
