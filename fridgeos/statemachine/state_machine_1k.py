@@ -1,144 +1,188 @@
 #%%
 from transitions import Machine
 import random
+from fridgeos.monitor.server import MetricsServer
+from fridgeos.monitor.client import MonitorClient
+import tomllib
+import os
+import time
+from typing import Dict, Any, List
 
 
-# T4Ksetpt: 4.2
-# T1Ksetpt: 2.8
-# Tpump: 50
-# T1Kfinal: 0.76
-# Tpumpfinal: 6.7
-# Tcheck: 0.76             #if the 1K sensor is below this temp the fridge does not recycle
-# T1Khigh: 2
-# Tswitch: 11
-
-heaters = {
-    "pump_heater": "Heater1",
-}
-
-criteria = {
-    "pump_warming" :
-        {
-        "pump": 50,
-        "1k": 0.1,
-        },
-    "heat_switch_cooling" :
-        {
-        "pump": 50,
-        "switch": 11,
-        },
-}
 
 
-class DummyHALClient:
-    def send(self, message_dict):
-        if message_dict['cmd'] == "get_temperatures":
-            data = {
-                "4k": 0.0,
-                "1k": 0.0,
-                "40k": 0.0,
-            }
-            return data
-        elif message_dict['set_heater_value']:
-            print(f"Setting heater {message_dict['name']} to {message_dict['value']}")
 
-client = DummyHALClient()
-
-class FridgeController1K:
-    def __init__(self):
-        pass
-
-    def enable(self, heater):
-        print("Enabling heater: ", heater)
-        # client.send(
-
-    def check_temperature_criteria(self):
-        temperatures = client.send({"cmd": "get_temperatures"})
-        for name, temp in criteria.items():
-            if temperatures[name] > temp:
-                return True
-        temperatures['1k'] > criteria['1k']
+class ConfigurableStateMachine:
+    """State machine that reads configuration from TOML and uses MonitorClient for conditions"""
     
-    def on_enter_pump_warming(self):
-        self.enable['pump_heater']
-        print("Entered pump_warming state")
+    def __init__(self, config_path: str, monitor_client: MonitorClient):
+        self.config_path = config_path
+        self.monitor_client = monitor_client
+        
+        # Load configuration
+        self.config = self._load_config()
+        
+        # Extract states from transitions
+        self.states = self._extract_states()
+        
+        # Initialize the state machine
+        self.machine = Machine(
+            model=self,
+            states=self.states,
+            initial=self.states[0] if self.states else 'unknown',
+            auto_transitions=False,
+            ignore_invalid_triggers=True
+        )
+        
+        # Add transitions from configuration
+        self._add_transitions()
+    
+    def _load_config(self) -> Dict[str, Any]:
+        """Load TOML configuration file"""
+        with open(self.config_path, "rb") as f:
+            return tomllib.load(f)
+    
+    def _extract_states(self) -> List[str]:
+        """Extract unique states from transitions"""
+        states = set()
+        for transition in self.config.get('transitions', []):
+            states.add(transition['from'])
+            states.add(transition['to'])
+        return list(states)
+    
+    def _add_transitions(self):
+        """Add transitions from configuration"""
+        for i, transition in enumerate(self.config.get('transitions', [])):
+            from_state = transition['from']
+            to_state = transition['to']
+            conditions = transition.get('conditions', [])
+            max_seconds = transition.get('max_seconds', None)
+            
+            # Create a unique trigger name
+            trigger_name = f"transition_{i}_{from_state}_to_{to_state}"
+            
+            # Store transition info for later use
+            setattr(self, trigger_name, lambda t=trigger_name, tr=transition: self._execute_transition(t, tr))
+    
+    def _check_conditions_with_metrics(self, conditions: List[Dict[str, Any]], metrics: Dict[str, Any]) -> bool:
+        """Check all conditions using provided metrics"""
+        if not conditions:
+            return True
+        
+        for condition in conditions:
+            sensor = condition['sensor']
+            operator = condition['is']
+            target_value = condition['value']
+            
+            try:
+                # Find the sensor value in the metrics
+                current_value = None
+                for metric_type, values in metrics.items():
+                    if sensor in values:
+                        current_value = values[sensor]
+                        break
+                
+                if current_value is None:
+                    print(f"Warning: Sensor '{sensor}' not found in metrics")
+                    return False
+                
+                # Apply the condition
+                if operator == "less than":
+                    result = current_value < target_value
+                elif operator == "greater than":
+                    result = current_value > target_value
+                else:
+                    print(f"Warning: Unknown operator '{operator}'")
+                    return False
+                
+                print(f"Condition check: {sensor} {operator} {target_value} -> {current_value} = {result}")
+                if not result:
+                    return False
+                    
+            except Exception as e:
+                print(f"Error checking condition: {e}")
+                return False
+        
+        return True
+    
+    def _execute_transition(self, trigger_name: str, transition_info: Dict[str, Any]):
+        """Execute a transition"""
+        try:
+            # Get current metrics once for condition checking
+            current_metrics = self.monitor_client.get_metrics()
+            print(f"Fetched metrics: {current_metrics}")
+            
+            # Check conditions using the fetched metrics
+            conditions = transition_info.get('conditions', [])
+            conditions_met = self._check_conditions_with_metrics(conditions, current_metrics)
+            
+            # If conditions are met, execute the state transition
+            if conditions_met:
+                print(f"Conditions met! Transitioning from {transition_info['from']} to {transition_info['to']}")
+                # Use pytransitions to change state
+                self.machine.set_state(transition_info['to'])
+                return True
+            else:
+                print(f"Conditions not met. Staying in state {transition_info['from']}")
+                return False
+            
+        except Exception as e:
+            print(f"Error executing transition {trigger_name}: {e}")
+            return None
+    
 
-    # def advance_to_next_state(self):
-    #     print("Advancing to next state")
-
-#
-# Initialize the state machine
-fridge = FridgeController1K()
-states = ['warm', 'heat_switch_cooling', 'pump_warming', 'cold', 'warming_up']
-machine = Machine(model=fridge, states=states, initial='heat_switch_cooling')
-
-# Advance from heat_switch_cooling to pump_warming only if we've satisfied the condition
-# that we've reached our temperature criteria of interest.  
-machine.add_transition(trigger='advance_to_next_state', source='heat_switch_cooling', dest='pump_warming',
-                        conditions = 'check_temperature_criteria')
- # Internal transition; no state change; will not execute on_enter_heat_switch_cooling
-machine.add_transition(trigger='advance_to_next_state', source='heat_switch_cooling', dest=None)
-
-
-machine.add_transition(trigger='advance_to_next_state', source='pump_warming', dest='cooling',
-                        conditions = 'check_temperature_criteria')
- # Internal transition; no state change; will not execute on_enter_heat_switch_cooling
-machine.add_transition(trigger='advance_to_next_state', source='pump_warming', dest=None)
+    
 
 
 
-while True:
-    fridge.advance_to_next_state()
-    fridge.update_pid()
-    if message is 'recycle':
-        fridge.go_to_state('heat_switch_cooling')
+def demo_state_machine_with_monitor():
+    """Demonstrate the state machine with MonitorClient integration"""
+    print("=== State Machine with Monitor Integration Demo ===\n")
+    
+    # Create monitor server (for demo purposes)
+    monitor_server = MetricsServer(cryostat_name='mycryo')
+    
+    # Create monitor client
+    monitor_client = MonitorClient(url="http://localhost:8000", timeout=0.1)
+    
+    # Get the path to the TOML file
+    toml_path = os.path.join(os.path.dirname(__file__), "state_machine_1k.toml")
+    
+    # Create state machine
+    state_machine = ConfigurableStateMachine(toml_path, monitor_client)
+    
+    print(f"States: {state_machine.states}")
+    print(f"Current state: {state_machine.state}")
+    print(f"Available transitions: {state_machine.machine.get_triggers(state_machine.state)}\n")
+    
+    # Simulate some metric updates
+    print("Updating metrics...")
+    monitor_server.update_metric_values(
+        metric_name='temperatures',
+        new_values_dict={
+            'heat_switch': 15.0,  # Below 20, should allow transition
+            'pump': 30.0,         # Below 50, should allow transition
+        }
+    )
+    
+    # Try to execute transitions
+    print("\nAttempting transitions...")
+    
+    # Get available transitions for current state
+    current_state = state_machine.state
+    available_triggers = state_machine.machine.get_triggers(current_state)
+    
+    for trigger in available_triggers:
+        print(f"Trying trigger: {trigger}")
+        try:
+            # Execute the transition
+            result = getattr(state_machine, trigger)()
+            print(f"Transition result: {result}")
+        except Exception as e:
+            print(f"Error: {e}")
+    
+    print("\nDemo completed.")
 
 
-#%%
-
-
-
-# class FridgeController:
-
-#     # Define some states. Most of the time, narcoleptic superheroes are just like
-#     # everyone else. Except for...
-#     
-
-#     def __init__(self):
-
-    #     # Superheroes need to keep in shape.
-    #     machine.add_transition('work_out', 'hanging out', 'hungry')
-
-    #     # Those calories won't replenish themselves!
-    #     self.machine.add_transition('eat', 'hungry', 'hanging out')
-
-    #     # Superheroes are always on call. ALWAYS. But they're not always
-    #     # dressed in work-appropriate clothing.
-    #     self.machine.add_transition('distress_call', '*', 'saving the world',
-    #                      before='change_into_super_secret_costume')
-
-    #     # When they get off work, they're all sweaty and disgusting. But before
-    #     # they do anything else, they have to meticulously log their latest
-    #     # escapades. Because the legal department says so.
-    #     self.machine.add_transition('complete_mission', 'saving the world', 'sweaty',
-    #                      after='update_journal')
-
-    #     # Sweat is a disorder that can be remedied with water.
-    #     # Unless you've had a particularly long day, in which case... bed time!
-    #     self.machine.add_transition('clean_up', 'sweaty', 'asleep', conditions=['is_exhausted'])
-    #     self.machine.add_transition('clean_up', 'sweaty', 'hanging out')
-
-    #     # Our NarcolepticSuperhero can fall asleep at pretty much any time.
-    #     self.machine.add_transition('nap', '*', 'asleep')
-
-    # def update_journal(self):
-    #     """ Dear Diary, today I saved Mr. Whiskers. Again. """
-    #     self.kittens_rescued += 1
-
-    # @property
-    # def is_exhausted(self):
-    #     """ Basically a coin toss. """
-    #     return random.random() < 0.5
-
-    # def change_into_super_secret_costume(self):
-    #     print("Beauty, eh?")
+if __name__ == "__main__":
+    demo_state_machine_with_monitor()

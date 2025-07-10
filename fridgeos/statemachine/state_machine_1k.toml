@@ -1,0 +1,47 @@
+[[transitions]]
+from = "warm"
+to = "cold"
+max_seconds = 60
+    [[transitions.conditions]]
+    sensor = "heat_switch"
+    is = "less than"
+    value = 20
+    [[transitions.conditions]]
+    sensor = "pump"
+    is = "less than"
+    value = 50
+
+[[transitions]]
+from = "cold"
+to = "warm"
+max_seconds = 120
+    [[transitions.conditions]]
+    sensor = "heat_switch"
+    is = "greater than"
+    value = 25
+    [[transitions.conditions]]
+    sensor = "pump"
+    is = "greater than"
+    value = 80
+
+[[transitions]]
+from = "cold"
+to = "maintenance"
+max_seconds = 300
+    [[transitions.conditions]]
+    sensor = "heat_switch"
+    is = "less than"
+    value = 5
+    [[transitions.conditions]]
+    sensor = "pump"
+    is = "less than"
+    value = 10
+
+[[transitions]]
+from = "maintenance"
+to = "warm"
+max_seconds = 180
+    [[transitions.conditions]]
+    sensor = "heat_switch"
+    is = "greater than"
+    value = 15
