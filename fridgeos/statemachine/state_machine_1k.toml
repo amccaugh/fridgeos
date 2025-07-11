@@ -1,23 +1,34 @@
 [constants]
-switch_temp = 20
+T_switch_high = 20
 
-
-[thermometers]
+# [thermometers.name_of_thermometer]
 [thermometers.1k]
 corresponding_heater = "4HEAD"
 coefficients = {P = 10, I = 1, D = 0}
 [thermometers.4k]
 corresponding_heater = "4HEAD"
 coefficients = {P = 10, I = 1, D = 0}
-
+[thermometers.pump]
+corresponding_heater = "PUMPHEATER"
+coefficients = {P = 10, I = 1, D = 0}
+[thermometers.heat_switch]
+corresponding_heater = "HS_HEATER"
+coefficients = {P = 10, I = 1, D = 0}
 
 
 
 ### States - Set to these values when entering the state
-[states]
 [states.warm]
-4HEAD = 300
-PUMP = 300
+[states.warming_up]
+pump = 300
+4k = 300
+1k = 300
+[states.cold]
+pump = 300
+4k = 300
+1k = 300
+heat_switch = "T_switch_high"
+
 
 
 [[transitions]]
@@ -25,7 +36,7 @@ from = "warm"
 to = "cold"
 max_seconds = 60
 criteria = [
-    "heat_switch < switch_temp",
+    "heat_switch < T_switch_high",
     "pump < 50",
 ]
 

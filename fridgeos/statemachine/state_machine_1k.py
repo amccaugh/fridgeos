@@ -12,6 +12,7 @@ class Fridge:
     def __init__(self, config_path):
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
         self.thermometers = self._load_thermometers(config_path)
+        self.states = self._load_states(config_path)
         self.current_temperatures = {
             'heat_switch': 0,
             'pump': 0,
@@ -77,7 +78,6 @@ class Fridge:
     def _load_thermometers(self, config_path):
         """
         Load thermometer configurations from the TOML file.
-        Returns a dictionary of thermometer configurations with their corresponding heaters and PID controllers.
         """
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
@@ -106,9 +106,41 @@ class Fridge:
         
         return parsed_thermometers
 
-    def update_heaters(self):
-        # update heaters here with HAL client
-        pass
+    def _load_states(self, config_path):
+        """
+        Load state configurations from the TOML file.
+        Returns a dictionary of state configurations with their target values.
+        Supports constants from the [constants] section.
+        """
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+        
+        # Get constants for resolving values
+        constants = config.get('constants', {})
+        
+        states = config.get('states', {})
+        parsed_states = {}
+        
+        for state_name, state_config in states.items():
+            parsed_state = {}
+            for key, value in state_config.items():
+                # Check if value is a constant reference
+                if isinstance(value, str) and value in constants:
+                    resolved_value = constants[value]
+                else:
+                    resolved_value = value
+                parsed_state[key] = resolved_value
+            parsed_states[state_name] = parsed_state
+        
+        return parsed_states
+
+    def update_heater_setpoints(self, new_state):
+        thermometer_config = self.states[new_state]
+        for thermometer, value in thermometer_config.items():
+            print(f'Setting {thermometer} to {value}')
+            heater_name = self.thermometers[thermometer]['corresponding_heater']
+            pid_controller = self.thermometers[thermometer]['pid_controller']
+            pid_controller.setpoint = value
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
@@ -136,9 +168,11 @@ class Fridge:
         """ Attempt to transition to the next state. """
         transition = self.check_transitions()
         if transition:
-            print(f'Transitioning from {self.current_state} to {transition["to"]}')
-            self.current_state = transition['to']
+            new_state = transition['to']
+            print(f'Transitioning from {self.current_state} to {new_state}')
+            self.current_state = new_state
             self.state_entry_time = time.time()
+            self.update_heater_setpoints(new_state)
             return True
         return False
 
@@ -146,6 +180,7 @@ class Fridge:
 
 
 fridge = Fridge(config_path = 'state_machine_1k.toml')
+#%%
 fridge.attempt_transition() 
 fridge.current_temperatures['heat_switch'] = 21
 fridge.attempt_transition() 
