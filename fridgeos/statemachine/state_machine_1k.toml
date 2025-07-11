@@ -1,9 +1,13 @@
+[constants]
+switch_temp = 20
+
+
 [[transitions]]
 from = "warm"
 to = "cold"
 max_seconds = 60
 criteria = [
-    "heat_switch < 20",
+    "heat_switch < switch_temp",
     "pump < 50",
 ]
 heater_commands = [

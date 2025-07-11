@@ -32,12 +32,13 @@ class Fridge(object):
         now = time.time()
         for t in self.criteria:
             if t['from'] == self.current_state:
-                # Check if the transition criteria are met or timeout
                 print(f'Checking transition from {self.current_state} to {t["to"]}')
                 timeout = self.state_timeouts.get((t['from'], t['to']))
+                # Check if all criteria are met
                 if all(self._check_criterion(c) for c in t['criteria']):
                     print(f'Transition criteria met for {t["from"]} to {t["to"]}')
                     return t
+                # Check if timeout is exceeded
                 if timeout is not None and now - self.state_entry_time > timeout:
                     return t
         return None
@@ -52,18 +53,28 @@ class Fridge(object):
             return True
         return False
 
-    def _parse_criterion(self, crit):
+    def _parse_criterion(self, crit, constants=None):
         """
         Parse a single criterion string into a dict with sensor, operator function, and value.
         """
+        if constants is None:
+            constants = {}
+            
         parts = crit.strip().split()
         if len(parts) == 3:
-            sensor, op, value = parts
-            value = float(value)
+            sensor, op, value_str = parts
+            
+            # Check if value is a constant reference
+            if value_str in constants:
+                value = constants[value_str]
+            else:
+                value = float(value_str)
+            
             # Map op string to function
             if op == '<':  op_func = operator.lt
             elif op == '>': op_func = operator.gt
             else: raise ValueError(f"Invalid operator: {op}")
+            
             return {'sensor': sensor, 'op': op_func, 'value': value}
         else:
             raise ValueError(f"Invalid criterion format: {crit}")
@@ -75,14 +86,18 @@ class Fridge(object):
         """
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
+        
+        # Get constants from the [constants] section
+        constants = config.get('constants', {})
+        
         transitions = config.get('transitions', [])
         parsed = []
         state_timeouts = {}
         for t in transitions:
             criteria_list = []
             for crit in t.get('criteria', []):
-                # Example crit: "heat_switch < 20"
-                criteria_list.append(self._parse_criterion(crit))
+                # Parse criterion with constants support
+                criteria_list.append(self._parse_criterion(crit, constants))
             parsed.append({
                 'from': t['from'],
                 'to': t['to'],
@@ -99,6 +114,22 @@ fridge = Fridge(config_path = 'state_machine_1k.toml')
 fridge.attempt_transition() 
 fridge.current_temperatures['heat_switch'] = 21
 fridge.attempt_transition() 
+
+# Test constants functionality
+print("=== Testing Constants Functionality ===")
+print(f"Loaded criteria: {fridge.criteria}")
+print(f"Constants from TOML: switch_temp = 20")
+
+# Test the first transition criteria (should use switch_temp constant)
+first_transition = fridge.criteria[0]
+print(f"First transition criteria: {first_transition['criteria']}")
+
+# Test criterion evaluation
+test_criterion = first_transition['criteria'][0]  # "heat_switch < switch_temp"
+print(f"Testing criterion: {test_criterion}")
+print(f"Current heat_switch temperature: {fridge.current_temperatures['heat_switch']}")
+print(f"Criterion result: {fridge._check_criterion(test_criterion)}")
+
 #%%
 
 
