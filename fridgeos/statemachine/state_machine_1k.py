@@ -9,13 +9,67 @@ import operator
 
 class Fridge(object):
     def __init__(self, config_path):
-        self.criteria, self.state_timeouts = self.load_transition_criteria(config_path)
+        self.criteria, self.state_timeouts = self._load_transition_criteria(config_path)
         self.current_temperatures = {
             'heat_switch': 0,
             'pump': 0,
         }
         self.current_state = 'warm'
         self.state_entry_time = time.time()
+
+    def _parse_criterion(self, crit, constants=None):
+        """
+        Parse a single criterion string into a dict with sensor, operator function, and value.
+        """
+        if constants is None:
+            constants = {}
+            
+        parts = crit.strip().split()
+        if len(parts) == 3:
+            sensor, op, value_str = parts
+            
+            # Check if value is a constant reference
+            if value_str in constants:
+                value = constants[value_str]
+            else:
+                value = float(value_str)
+            
+            # Map op string to function
+            if op == '<':  op_func = operator.lt
+            elif op == '>': op_func = operator.gt
+            else: raise ValueError(f"Invalid operator: {op}")
+            
+            return {'sensor': sensor, 'op': op_func, 'value': value}
+        else:
+            raise ValueError(f"Invalid criterion format: {crit}")
+
+
+    def _load_transition_criteria(self, config_path):
+        """
+        Reads the TOML config file and parses the transition criteria.
+        """
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+        
+        # Get constants from the [constants] section
+        constants = config.get('constants', {})
+        
+        transitions = config.get('transitions', [])
+        parsed = []
+        state_timeouts = {}
+        for t in transitions:
+            criteria_list = []
+            for crit in t.get('criteria', []):
+                # Parse criterion with constants support
+                criteria_list.append(self._parse_criterion(crit, constants))
+            parsed.append({
+                'from': t['from'],
+                'to': t['to'],
+                'criteria': criteria_list
+            })
+            if t.get('max_seconds') is not None:
+                state_timeouts[(t['from'], t['to'])] = t['max_seconds']
+        return parsed, state_timeouts
 
     def update_heaters(self):
         # update heaters here with HAL client
@@ -52,60 +106,6 @@ class Fridge(object):
             self.state_entry_time = time.time()
             return True
         return False
-
-    def _parse_criterion(self, crit, constants=None):
-        """
-        Parse a single criterion string into a dict with sensor, operator function, and value.
-        """
-        if constants is None:
-            constants = {}
-            
-        parts = crit.strip().split()
-        if len(parts) == 3:
-            sensor, op, value_str = parts
-            
-            # Check if value is a constant reference
-            if value_str in constants:
-                value = constants[value_str]
-            else:
-                value = float(value_str)
-            
-            # Map op string to function
-            if op == '<':  op_func = operator.lt
-            elif op == '>': op_func = operator.gt
-            else: raise ValueError(f"Invalid operator: {op}")
-            
-            return {'sensor': sensor, 'op': op_func, 'value': value}
-        else:
-            raise ValueError(f"Invalid criterion format: {crit}")
-
-
-    def load_transition_criteria(self, config_path):
-        """
-        Reads the TOML config file and parses the transition criteria.
-        """
-        with open(config_path, "rb") as f:
-            config = tomllib.load(f)
-        
-        # Get constants from the [constants] section
-        constants = config.get('constants', {})
-        
-        transitions = config.get('transitions', [])
-        parsed = []
-        state_timeouts = {}
-        for t in transitions:
-            criteria_list = []
-            for crit in t.get('criteria', []):
-                # Parse criterion with constants support
-                criteria_list.append(self._parse_criterion(crit, constants))
-            parsed.append({
-                'from': t['from'],
-                'to': t['to'],
-                'criteria': criteria_list
-            })
-            if t.get('max_seconds') is not None:
-                state_timeouts[(t['from'], t['to'])] = t['max_seconds']
-        return parsed, state_timeouts
 
 
 
