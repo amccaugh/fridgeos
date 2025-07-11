@@ -8,16 +8,35 @@ import operator
 from simple_pid import PID
 
 
+class DummyMonitorClient:
+    def __init__(self):
+        self.metrics = {}
+    
+    def get_temperatures(self):
+        return self.metrics
+    
+    def set_metric(self, name, value):
+        self.metrics[name] = value 
+
+
+class DummyHalClient:
+    def __init__(self):
+        self.values = {}
+
+    def set_heater_value(self, name, value):
+        print(f'[HAL] setting heater {name} to {value}')
+
+
+
 class Fridge:
-    def __init__(self, config_path):
+    def __init__(self, config_path, monitor_client, hal_client):
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
         self.thermometers = self._load_thermometers(config_path)
         self.states = self._load_states(config_path)
-        self.current_temperatures = {
-            'heat_switch': 0,
-            'pump': 0,
-        }
-        self.current_state = 'warm'
+        self.monitor_client = monitor_client
+        self.hal_client = hal_client
+        # Set the first state as the initial state
+        self.current_state = list(self.states.keys())[0]    
         self.state_entry_time = time.time()
         
 
@@ -96,7 +115,7 @@ class Fridge:
                 Ki=coefficients.get('I', 0),
                 Kd=coefficients.get('D', 0),
                 sample_time=None,
-                output_limits=(0, 100)  # Default limits, can be made configurable
+                output_limits=(0, coefficients['max_value'])
             )
             
             parsed_thermometers[thermometer_name] = {
@@ -144,8 +163,10 @@ class Fridge:
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
+        current_temperatures = self.monitor_client.get_temperatures()
+        print(f'Checking criterion: {criterion["sensor"]} {criterion["op"]} {criterion["value"]}')
         return criterion['op'](
-            self.current_temperatures[criterion['sensor']],
+            current_temperatures[criterion['sensor']],
             criterion['value'])
 
     def check_transitions(self):
@@ -194,42 +215,30 @@ class Fridge:
 
 
 
+monitor_client = DummyMonitorClient()
+monitor_client.set_metric('1K', 300)
+monitor_client.set_metric('4K', 300)
+monitor_client.set_metric('40K', 300)
+monitor_client.set_metric('pump', 300)
+monitor_client.set_metric('heat_switch', 300)
+print(monitor_client.get_temperatures())
 
-fridge = Fridge(config_path = 'state_machine_1k.toml')
-#%%
-fridge.attempt_transition() 
-fridge.current_temperatures['heat_switch'] = 21
-fridge.attempt_transition() 
-
-# Test constants functionality
-print("=== Testing Constants Functionality ===")
-print(f"Loaded criteria: {fridge.criteria}")
-print(f"Constants from TOML: switch_temp = 20")
-
-# Test the first transition criteria (should use switch_temp constant)
-first_transition = fridge.criteria[0]
-print(f"First transition criteria: {first_transition['criteria']}")
-
-# Test criterion evaluation
-test_criterion = first_transition['criteria'][0]  # "heat_switch < switch_temp"
-print(f"Testing criterion: {test_criterion}")
-print(f"Current heat_switch temperature: {fridge.current_temperatures['heat_switch']}")
-print(f"Criterion result: {fridge._check_criterion(test_criterion)}")
-
-#%%
+hal_client = DummyHalClient()
+fridge = Fridge(config_path = 'state_machine_1k.toml', 
+    monitor_client = monitor_client,
+    hal_client = hal_client)
 
 
-if __name__ == "__main__":
-    """Demonstrate the state machine with MonitorClient integration"""
-    print("=== State Machine with Monitor Integration Demo ===\n")
-    
-    # Create monitor server (for demo purposes)
-    monitor_server = MetricsServer(cryostat_name='mycryo')
-    
-    # Create monitor client
-    monitor_client = MonitorClient(url="http://localhost:8000", timeout=0.1)
-    
-    # Get the path to the TOML file
-    toml_path = os.path.join(os.path.dirname(__file__), "state_machine_1k.toml")
-    
-# %%
+print(f'Fridge state: {fridge.current_state}')
+fridge.attempt_transition()
+
+monitor_client.set_metric('1K', 1)
+monitor_client.set_metric('4K', 1)
+monitor_client.set_metric('40K', 1)
+monitor_client.set_metric('pump', 1)
+monitor_client.set_metric('heat_switch', 1)
+
+fridge.attempt_transition()
+
+
+
