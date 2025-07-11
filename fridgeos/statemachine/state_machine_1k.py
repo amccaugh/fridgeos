@@ -176,6 +176,22 @@ class Fridge:
             return True
         return False
 
+    def update_heaters(self):
+        # Get temperatures from MonitorClient
+        self.current_temperatures = self.monitor_client.get_temperatures()
+        # For each thermometer listed in the monitor
+        for thermometer_name, T in self.current_temperatures.items():
+            # If the thermometer is listed in the thermometers section of the config,
+            # set the corresponding heater to the value
+            if thermometer_name in self.thermometers:
+                heater_name = self.thermometers[thermometer_name].get('corresponding_heater')
+                if heater_name:
+                    pid_controller = self.thermometers[thermometer_name]['pid_controller']
+                    new_value = pid_controller(T)
+                    print(f'Setting heater {heater_name} to {new_value}')
+                    self.hal_client.set_heater(heater_name, new_value)
+
+
 
 
 
