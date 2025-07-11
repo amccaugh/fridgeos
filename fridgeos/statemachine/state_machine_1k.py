@@ -5,17 +5,20 @@ import tomllib
 import os
 import time
 import operator
+from simple_pid import PID
 
 
-class Fridge(object):
+class Fridge:
     def __init__(self, config_path):
-        self.criteria, self.state_timeouts = self._load_transition_criteria(config_path)
+        self.criteria, self.state_timeouts = self._load_transitions(config_path)
+        self.thermometers = self._load_thermometers(config_path)
         self.current_temperatures = {
             'heat_switch': 0,
             'pump': 0,
         }
         self.current_state = 'warm'
         self.state_entry_time = time.time()
+        
 
     def _parse_criterion(self, crit, constants=None):
         """
@@ -37,14 +40,14 @@ class Fridge(object):
             # Map op string to function
             if op == '<':  op_func = operator.lt
             elif op == '>': op_func = operator.gt
-            else: raise ValueError(f"Invalid operator: {op}")
+            else: raise ValueError(f"Invalid operator: {crit}")
             
             return {'sensor': sensor, 'op': op_func, 'value': value}
         else:
             raise ValueError(f"Invalid criterion format: {crit}")
 
 
-    def _load_transition_criteria(self, config_path):
+    def _load_transitions(self, config_path):
         """
         Reads the TOML config file and parses the transition criteria.
         """
@@ -70,6 +73,38 @@ class Fridge(object):
             if t.get('max_seconds') is not None:
                 state_timeouts[(t['from'], t['to'])] = t['max_seconds']
         return parsed, state_timeouts
+
+    def _load_thermometers(self, config_path):
+        """
+        Load thermometer configurations from the TOML file.
+        Returns a dictionary of thermometer configurations with their corresponding heaters and PID controllers.
+        """
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+        
+        thermometers = config.get('thermometers', {})
+        parsed_thermometers = {}
+        
+        for thermometer_name, thermometer_config in thermometers.items():
+            # Extract the corresponding heater
+            corresponding_heater = thermometer_config.get('corresponding_heater')
+            
+            # Create PID controller for this thermometer
+            coefficients = thermometer_config.get('coefficients', {})
+            pid_controller = PID(
+                Kp=coefficients.get('P', 0),
+                Ki=coefficients.get('I', 0),
+                Kd=coefficients.get('D', 0),
+                sample_time=None,
+                output_limits=(0, 100)  # Default limits, can be made configurable
+            )
+            
+            parsed_thermometers[thermometer_name] = {
+                'corresponding_heater': corresponding_heater,
+                'pid_controller': pid_controller
+            }
+        
+        return parsed_thermometers
 
     def update_heaters(self):
         # update heaters here with HAL client

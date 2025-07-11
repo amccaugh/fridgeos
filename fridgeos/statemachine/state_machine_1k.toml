@@ -2,6 +2,24 @@
 switch_temp = 20
 
 
+[thermometers]
+[thermometers.1k]
+corresponding_heater = "4HEAD"
+coefficients = {P = 10, I = 1, D = 0}
+[thermometers.4k]
+corresponding_heater = "4HEAD"
+coefficients = {P = 10, I = 1, D = 0}
+
+
+
+
+### States - Set to these values when entering the state
+[states]
+[states.warm]
+4HEAD = 300
+PUMP = 300
+
+
 [[transitions]]
 from = "warm"
 to = "cold"
@@ -10,11 +28,6 @@ criteria = [
     "heat_switch < switch_temp",
     "pump < 50",
 ]
-heater_commands = [
-    "4HEAD = 25",
-    "3HEAD = 15",
-]
-
 
 [[transitions]]
 from = "warm"
