@@ -12,13 +12,13 @@ authors = [
 ]
 license = { text = "CC BY-SA" }
 dependencies = [
-"psycopg2-binary",
-"pandas",
-"requests",
-"pyserial",
-"pyzmq",
-"python-statemachine",
-"simple_pid"
+    "psycopg2-binary",
+    "pandas",
+    "requests",
+    "pyserial",
+    "pyzmq",
+    "python-statemachine",
+    "simple-pid",
 ]
 
 [project.urls]
