@@ -46,6 +46,7 @@ class Fridge(object):
         """ Attempt to transition to the next state. """
         transition = self.check_transitions()
         if transition:
+            print(f'Transitioning from {self.current_state} to {transition["to"]}')
             self.current_state = transition['to']
             self.state_entry_time = time.time()
             return True
@@ -95,28 +96,9 @@ class Fridge(object):
 
 
 fridge = Fridge(config_path = 'state_machine_1k.toml')
-print(fridge.check_transitions()) # FIXME NOT WORKING START HERE
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
+fridge.attempt_transition() 
+fridge.current_temperatures['heat_switch'] = 21
+fridge.attempt_transition() 
 #%%
 
 
@@ -133,3 +115,4 @@ if __name__ == "__main__":
     # Get the path to the TOML file
     toml_path = os.path.join(os.path.dirname(__file__), "state_machine_1k.toml")
     
+# %%
