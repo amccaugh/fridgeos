@@ -6,6 +6,12 @@ criteria = [
     "heat_switch < 20",
     "pump < 50",
 ]
+heater_commands = [
+    "4HEAD = 25",
+    "3HEAD = 15",
+]
+
+
 [[transitions]]
 from = "warm"
 to = "slightly_warm"
@@ -14,6 +20,7 @@ criteria = [
     "heat_switch > 20",
     "pump > 50",
 ]
+
 [[transitions]]
 from = "cold"
 to = "warm"
