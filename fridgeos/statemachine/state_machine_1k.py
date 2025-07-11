@@ -1,23 +1,21 @@
 #%%
-from transitions import Machine
-import random
 from fridgeos.monitor.server import MetricsServer
 from fridgeos.monitor.client import MonitorClient
 import tomllib
 import os
 import time
 import operator
-import random
 
 
 class Fridge(object):
     def __init__(self, config_path):
-        self.machine = Machine(auto_transitions=False) # For plotting the graph only
-        self.criteria = self.load_transition_criteria(config_path)
+        self.criteria, self.state_timeouts = self.load_transition_criteria(config_path)
         self.current_temperatures = {
             'heat_switch': 0,
             'pump': 0,
         }
+        self.current_state = 'warm'
+        self.state_entry_time = time.time()
 
     def update_heaters(self):
         # update heaters here with HAL client
@@ -25,24 +23,33 @@ class Fridge(object):
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
-        return criterion['op'](self.current_temperatures[criterion['sensor']], criterion['value'] )
+        return criterion['op'](
+            self.current_temperatures[criterion['sensor']],
+            criterion['value'])
 
-    def check_transition_criteria(self):
-        """
-        Check if all transition criteria for the current state are met.
-        Goes through each of the criteria in self.criteria for the current state.
-        """
-        current_state = self.machine.state
-        for transition in self.criteria:
-            if transition['from'] == current_state:
-                # If all criteria are met, return the transition
-                for criterion in transition['criteria']:
-                    if not self._check_criterion(criterion):
-                        break
-                else:
-                    return transition
+    def check_transitions(self):
+        """ Check if any transition criteria are met or if any timeout is exceeded. """
+        now = time.time()
+        for t in self.criteria:
+            if t['from'] == self.current_state:
+                # Check if the transition criteria are met or timeout
+                print(f'Checking transition from {self.current_state} to {t["to"]}')
+                timeout = self.state_timeouts.get((t['from'], t['to']))
+                if all(self._check_criterion(c) for c in t['criteria']):
+                    print(f'Transition criteria met for {t["from"]} to {t["to"]}')
+                    return t
+                if timeout is not None and now - self.state_entry_time > timeout:
+                    return t
         return None
 
+    def attempt_transition(self):
+        """ Attempt to transition to the next state. """
+        transition = self.check_transitions()
+        if transition:
+            self.current_state = transition['to']
+            self.state_entry_time = time.time()
+            return True
+        return False
 
     def _parse_criterion(self, crit):
         """
@@ -60,6 +67,7 @@ class Fridge(object):
         else:
             raise ValueError(f"Invalid criterion format: {crit}")
 
+
     def load_transition_criteria(self, config_path):
         """
         Reads the TOML config file and parses the transition criteria.
@@ -68,6 +76,7 @@ class Fridge(object):
             config = tomllib.load(f)
         transitions = config.get('transitions', [])
         parsed = []
+        state_timeouts = {}
         for t in transitions:
             criteria_list = []
             for crit in t.get('criteria', []):
@@ -76,19 +85,37 @@ class Fridge(object):
             parsed.append({
                 'from': t['from'],
                 'to': t['to'],
-                'max_seconds': t.get('max_seconds'),
                 'criteria': criteria_list
             })
-            self.machine.add_transition(trigger = f'transition_{t["from"]}_{t["to"]}', 
-                source = t['from'], dest = t['to'],
-                conditions='check_temperature_criteria', after=['update_heaters'])
-        return parsed
+            if t.get('max_seconds') is not None:
+                state_timeouts[(t['from'], t['to'])] = t['max_seconds']
+        return parsed, state_timeouts
 
 
 
 
 fridge = Fridge(config_path = 'state_machine_1k.toml')
-print(fridge.check_transition_criteria()) # FIXME NOT WORKING START HERE
+print(fridge.check_transitions()) # FIXME NOT WORKING START HERE
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
 
 #%%
 

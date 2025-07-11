@@ -7,6 +7,14 @@ criteria = [
     "pump < 50",
 ]
 [[transitions]]
+from = "warm"
+to = "slightly_warm"
+max_seconds = 60
+criteria = [
+    "heat_switch > 20",
+    "pump > 50",
+]
+[[transitions]]
 from = "cold"
 to = "warm"
 max_seconds = 60
