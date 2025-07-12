@@ -164,10 +164,14 @@ class Fridge:
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
         current_temperatures = self.monitor_client.get_temperatures()
-        print(f'Checking criterion: {criterion["sensor"]} {criterion["op"]} {criterion["value"]}')
-        return criterion['op'](
+        if "sensor" not in criterion:
+            print(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
+            return False
+        result = criterion['op'](
             current_temperatures[criterion['sensor']],
             criterion['value'])
+        print(f'Criterion: {criterion["sensor"]} {criterion["op"]} {criterion["value"]} = {result}')
+        return result
 
     def check_transitions(self):
         """ Check if any transition criteria are met or if any timeout is exceeded. """
@@ -217,6 +221,7 @@ class Fridge:
 
 monitor_client = DummyMonitorClient()
 monitor_client.set_metric('1K', 300)
+monitor_client.set_metric('1K-main-plate', 300)
 monitor_client.set_metric('4K', 300)
 monitor_client.set_metric('40K', 300)
 monitor_client.set_metric('pump', 300)
@@ -231,14 +236,17 @@ fridge = Fridge(config_path = 'state_machine_1k.toml',
 
 print(f'Fridge state: {fridge.current_state}')
 fridge.attempt_transition()
-
-monitor_client.set_metric('1K', 1)
-monitor_client.set_metric('4K', 1)
-monitor_client.set_metric('40K', 1)
-monitor_client.set_metric('pump', 1)
+#%%
+monitor_client.set_metric('1K', 4.5)
+monitor_client.set_metric('1K-main-plate', 4.5)
+monitor_client.set_metric('4K', 4.5)
+monitor_client.set_metric('40K', 40)
+monitor_client.set_metric('pump', 50)
 monitor_client.set_metric('heat_switch', 1)
-
+print(f'Current state: {fridge.current_state}')
 fridge.attempt_transition()
 
 
 
+
+# %%
