@@ -4,14 +4,21 @@ import sys
 import os
 
 class FridgeLogger:
-    def __init__(self, log_path, debug=False, logger_name='HAL'):
-        self.logger = self.setup_logging(log_path, debug, logger_name)
+    def __init__(self, log_path, logger_name, debug=False):
+        self.logger = self.setup_logging(log_path, logger_name, debug)
 
-    def setup_logging(self, log_path, debug=False, logger_name='HAL'):
+    def setup_logging(self, log_path, logger_name, debug=False):
         if log_path is not None:
-            log_dir = os.path.dirname(log_path)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
+            # Handle relative paths properly
+            if os.path.dirname(log_path) == '':
+                # If log_path is just a filename or relative path, create the directory
+                if not os.path.exists(log_path):
+                    os.makedirs(log_path)
+            else:
+                # If log_path has a directory component, create the parent directory
+                log_dir = os.path.dirname(log_path)
+                if not os.path.exists(log_dir):
+                    os.makedirs(log_dir)
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
 
