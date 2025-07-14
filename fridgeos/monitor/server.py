@@ -55,7 +55,7 @@ class MonitorServer:
         server every min_update_period seconds for the temperatures/heater
         values/state
         """
-        self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="Monitor").get_logger()
+        self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="Monitor").logger
         self.metrics_server = MetricsServer(cryostat_name = cryostat_name, 
                                             ip_address="0.0.0.0",
                                             port=http_port)

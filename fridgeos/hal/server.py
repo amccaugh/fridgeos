@@ -17,14 +17,12 @@ from fridgeos.logger import FridgeLogger
 
 class HALServer(zmqhelper.Server):
 
-    def __init__(self, port, hardware_toml_path,
-                 debug = False, n_workers = 1,
-                 log_path = None):
+    def __init__(self, port, hardware_toml_path, log_path, debug = False, n_workers = 1):
         self.hardware = {}
         self.hardware['thermometers'] = {}
         self.hardware['heaters'] = {}
         self.load_hardware(hardware_toml_path)
-        self.logger = FridgeLogger.setup_logging(log_path, debug, logger_name='HAL')
+        self.logger = FridgeLogger(log_path, debug, logger_name='HAL').logger
         super().__init__(port, n_workers)
         print('HAL Server started')
     
