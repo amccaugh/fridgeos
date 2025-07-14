@@ -30,8 +30,11 @@ class DummyHalClient:
 
 
 
-class Fridge(zmqhelper.Server):
-    def __init__(self, config_path, monitor_client, hal_client):
+class FridgeStateMachine(zmqhelper.Server):
+    def __init__(self, config_path, log_path, monitor_client, hal_client, debug=True):
+        self.logger = FridgeLogger(log_path=log_path, debug=debug, logger_name="StateMachine").logger
+        self.logger.info(f"Initializing Fridge with config: {config_path}")
+        
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
         self.thermometers = self._load_thermometers(config_path)
         self.states = self._load_states(config_path)
@@ -40,6 +43,9 @@ class Fridge(zmqhelper.Server):
         # Set the first state as the initial state
         self.current_state = list(self.states.keys())[0]    
         self.state_entry_time = time.time()
+        
+        self.logger.info(f"Fridge initialized. Initial state: {self.current_state}")
+        self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.thermometers)} thermometers, {len(self.states)} states")
         self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="StateMachine").logger
         super().__init__(port=5556, n_workers=1)
 
@@ -74,11 +80,13 @@ class Fridge(zmqhelper.Server):
         """
         Reads the TOML config file and parses the transition criteria.
         """
+        self.logger.debug(f"Loading transitions from {config_path}")
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
         
         # Get constants from the [constants] section
         constants = config.get('constants', {})
+        self.logger.debug(f"Loaded constants: {constants}")
         
         transitions = config.get('transitions', [])
         parsed = []
@@ -95,12 +103,16 @@ class Fridge(zmqhelper.Server):
             })
             if t.get('max_seconds') is not None:
                 state_timeouts[(t['from'], t['to'])] = t['max_seconds']
+                self.logger.debug(f"Added timeout for {t['from']} -> {t['to']}: {t['max_seconds']}s")
+        
+        self.logger.info(f"Loaded {len(parsed)} transitions")
         return parsed, state_timeouts
 
     def _load_thermometers(self, config_path):
         """
         Load thermometer configurations from the TOML file.
         """
+        self.logger.debug(f"Loading thermometers from {config_path}")
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
         
@@ -113,6 +125,8 @@ class Fridge(zmqhelper.Server):
             
             # Create PID controller for this thermometer
             coefficients = thermometer_config.get('coefficients', {})
+            self.logger.debug(f"Creating PID for {thermometer_name}: P={coefficients.get('P', 0)}, I={coefficients.get('I', 0)}, D={coefficients.get('D', 0)}, max_value={coefficients.get('max_value', 100)}")
+            
             pid_controller = PID(
                 Kp=coefficients.get('P', 0),
                 Ki=coefficients.get('I', 0),
@@ -125,7 +139,9 @@ class Fridge(zmqhelper.Server):
                 'corresponding_heater': corresponding_heater,
                 'pid_controller': pid_controller
             }
+            self.logger.debug(f"Configured {thermometer_name} -> {corresponding_heater}")
         
+        self.logger.info(f"Loaded {len(parsed_thermometers)} thermometers")
         return parsed_thermometers
 
     def _load_states(self, config_path):
@@ -134,6 +150,7 @@ class Fridge(zmqhelper.Server):
         Returns a dictionary of state configurations with their target values.
         Supports constants from the [constants] section.
         """
+        self.logger.debug(f"Loading states from {config_path}")
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
         
@@ -149,11 +166,14 @@ class Fridge(zmqhelper.Server):
                 # Check if value is a constant reference
                 if isinstance(value, str) and value in constants:
                     resolved_value = constants[value]
+                    self.logger.debug(f"Resolved constant {value} -> {resolved_value} for {state_name}.{key}")
                 else:
                     resolved_value = value
                 parsed_state[key] = resolved_value
             parsed_states[state_name] = parsed_state
+            self.logger.debug(f"Loaded state {state_name}: {parsed_state}")
         
+        self.logger.info(f"Loaded {len(parsed_states)} states")
         return parsed_states
 
         
@@ -181,23 +201,25 @@ class Fridge(zmqhelper.Server):
         return message_out               
 
     def update_heater_setpoints(self, new_state):
+        self.logger.info(f"Updating heater setpoints for state: {new_state}")
         thermometer_config = self.states[new_state]
         for thermometer, value in thermometer_config.items():
-            print(f'Setting {thermometer} to {value}')
+            self.logger.debug(f'Setting {thermometer} setpoint to {value}')
             heater_name = self.thermometers[thermometer]['corresponding_heater']
             pid_controller = self.thermometers[thermometer]['pid_controller']
             pid_controller.setpoint = value
+            self.logger.debug(f'PID setpoint for {thermometer} -> {heater_name} set to {value}')
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
-        current_temperatures = self.monitor_client.get_temperatures()
+        current_temperatures = self.monitor_client.get_metrics()['temperatures']
         if "sensor" not in criterion:
-            print(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
+            self.logger.error(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
             return False
         result = criterion['op'](
             current_temperatures[criterion['sensor']],
             criterion['value'])
-        print(f'Criterion: {criterion["sensor"]} {criterion["op"]} {criterion["value"]} = {result}')
+        self.logger.debug(f'Criterion: {criterion["sensor"]} {criterion["op"]} {criterion["value"]} = {result}')
         return result
 
     def check_transitions(self):
@@ -205,14 +227,15 @@ class Fridge(zmqhelper.Server):
         now = time.time()
         for t in self.criteria:
             if t['from'] == self.current_state:
-                print(f'Checking transition from {self.current_state} to {t["to"]}')
+                self.logger.debug(f'Checking transition from {self.current_state} to {t["to"]}')
                 timeout = self.state_timeouts.get((t['from'], t['to']))
                 # Check if all criteria are met
                 if all(self._check_criterion(c) for c in t['criteria']):
-                    print(f'Transition criteria met for {t["from"]} to {t["to"]}')
+                    self.logger.info(f'Transition criteria met for {t["from"]} to {t["to"]}')
                     return t
                 # Check if timeout is exceeded
                 if timeout is not None and now - self.state_entry_time > timeout:
+                    self.logger.info(f'Transition timeout exceeded for {t["from"]} to {t["to"]} after {timeout}s')
                     return t
         return None
 
@@ -226,7 +249,7 @@ class Fridge(zmqhelper.Server):
 
     def make_transition(self, new_state):
         """ Force a transition to the given state. """
-        print(f'Transitioning from {self.current_state} to {new_state}')
+        self.logger.info(f'Transitioning from {self.current_state} to {new_state}')
         self.current_state = new_state
         self.state_entry_time = time.time()
         self.update_heater_setpoints(new_state)
@@ -235,6 +258,7 @@ class Fridge(zmqhelper.Server):
     def update_heaters(self):
         # Get temperatures from MonitorClient
         self.current_temperatures = self.monitor_client.get_temperatures()
+        self.logger.debug(f"Current temperatures: {self.current_temperatures}")
         # For each thermometer listed in the monitor
         for thermometer_name, T in self.current_temperatures.items():
             # If the thermometer is listed in the thermometers section of the config,
@@ -244,46 +268,45 @@ class Fridge(zmqhelper.Server):
                 if heater_name:
                     pid_controller = self.thermometers[thermometer_name]['pid_controller']
                     new_value = pid_controller(T)
-                    print(f'Setting heater {heater_name} to {new_value}')
+                    self.logger.debug(f'Setting heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
                     self.hal_client.set_heater(heater_name, new_value)
 
     def run(self):
-        self.logger.info('Starting state machine')
+        self.logger.info('Starting state machine loop')
         while True:
-            self.update_heaters()
-            self.attempt_transition()
-            time.sleep(1)
+            try:
+                self.update_heaters()
+                self.attempt_transition()
+                time.sleep(1)
+            except KeyboardInterrupt:
+                self.logger.info('State machine stopped by user')
+                break
+            except Exception as e:
+                self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
+                time.sleep(1)
 
 
-monitor_client = DummyMonitorClient()
-monitor_client.set_metric('1K', 300)
-monitor_client.set_metric('1K-main-plate', 300)
-monitor_client.set_metric('4K', 300)
-monitor_client.set_metric('40K', 300)
-monitor_client.set_metric('pump', 300)
-monitor_client.set_metric('heat_switch', 300)
-print(monitor_client.get_temperatures())
+monitor_client = MonitorClient(url = 'http://qittlab-nuc-02.campus.nist.gov:8000/', timeout = 0.1)
+# monitor_client.set_metric('1K', 300)
+# monitor_client.set_metric('1K-main-plate', 300)
+# monitor_client.set_metric('4K', 300)
+# monitor_client.set_metric('40K', 300)
+# monitor_client.set_metric('pump', 300)
+# monitor_client.set_metric('heat_switch', 300)
+print(monitor_client.get_metrics())
 
 hal_client = DummyHalClient()
-fridge = Fridge(config_path = 'state_machine_1k.toml', 
-
+fridge = FridgeStateMachine(
+    config_path = 'state_machine_1k.toml', 
+    log_path = 'logs',
     monitor_client = monitor_client,
-    hal_client = hal_client)
+    hal_client = hal_client,
+    debug = True
+)
 
 
 print(f'Fridge state: {fridge.current_state}')
 fridge.attempt_transition()
-#%%
-monitor_client.set_metric('1K', 4.5)
-monitor_client.set_metric('1K-main-plate', 4.5)
-monitor_client.set_metric('4K', 4.5)
-monitor_client.set_metric('40K', 40)
-monitor_client.set_metric('pump', 50)
-monitor_client.set_metric('heat_switch', 1)
-print(f'Current state: {fridge.current_state}')
-fridge.attempt_transition()
-
-
 
 
 # %%
