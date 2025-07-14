@@ -12,9 +12,9 @@ class S(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        sec_last_update = round(time.time() - self.server.json_dict['metadata']['last_update_time'],3)
-        self.server.json_dict['metadata']['seconds_since_last_update'] = sec_last_update
-        self.wfile.write(json.dumps(self.server.json_dict).encode(encoding='utf_8'))
+        sec_last_update = round(time.time() - self.server.json_dict['metadata']['last_update_time'],3)  # type: ignore[attr-defined]
+        self.server.json_dict['metadata']['seconds_since_last_update'] = sec_last_update  # type: ignore[attr-defined]
+        self.wfile.write(json.dumps(self.server.json_dict).encode(encoding='utf_8'))  # type: ignore[attr-defined]
 
 class SimpleJSONhttpserver:
     def __init__(self, ip_address="localhost", port=8000):
