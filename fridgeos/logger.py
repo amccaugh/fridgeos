@@ -45,6 +45,3 @@ class FridgeLogger:
                 logger.addHandler(handler3)
         logger.debug('Starting up server')
         return logger
-
-    def get_logger(self):
-        return self.logger 
