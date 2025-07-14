@@ -247,7 +247,12 @@ class Fridge(zmqhelper.Server):
                     print(f'Setting heater {heater_name} to {new_value}')
                     self.hal_client.set_heater(heater_name, new_value)
 
-
+    def run(self):
+        self.logger.info('Starting state machine')
+        while True:
+            self.update_heaters()
+            self.attempt_transition()
+            time.sleep(1)
 
 
 monitor_client = DummyMonitorClient()
@@ -261,6 +266,7 @@ print(monitor_client.get_temperatures())
 
 hal_client = DummyHalClient()
 fridge = Fridge(config_path = 'state_machine_1k.toml', 
+
     monitor_client = monitor_client,
     hal_client = hal_client)
 
