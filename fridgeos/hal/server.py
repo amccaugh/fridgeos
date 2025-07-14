@@ -10,6 +10,7 @@ import os
 
 # Device driver imports
 from .drivers.haldrivers import hal_classes
+from fridgeos.logger import FridgeLogger
 
 # TODO: Make 1 worker per communication address (e.g. 1 for COM5, 1 for COM6, 1 for /dev/usb321)
 # TODO: Add configuration-file checking (e.g. for max_heater_value) and error reporting
@@ -23,7 +24,7 @@ class HALServer(zmqhelper.Server):
         self.hardware['thermometers'] = {}
         self.hardware['heaters'] = {}
         self.load_hardware(hardware_toml_path)
-        self._setup_logging(log_path, debug)
+        self.logger = FridgeLogger.setup_logging(log_path, debug, logger_name='HAL')
         super().__init__(port, n_workers)
         print('HAL Server started')
     
@@ -35,37 +36,6 @@ class HALServer(zmqhelper.Server):
             raise ValueError(f'Device name "{name}" not found for hardware type {hardware_type}')
         else:
             return self.hardware[hardware_type][name]['python_object']
-
-    def _setup_logging(self, log_path, debug = False):
-        # Make the logging path if doesn't exist
-        if log_path is not None:
-            log_dir = os.path.dirname(log_path)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-        # Create the logger
-        logger = logging.getLogger('HAL')
-        logger.setLevel(logging.DEBUG)
-        # Create 3 "handlers" two which output to a log file, the other to stdout
-        handler1 = logging.StreamHandler(sys.stdout)
-        handler2 = logging.FileHandler(os.path.join(log_path, 'hal-errors.log'), mode='a')
-        handler3 = logging.FileHandler(os.path.join(log_path, 'hal-debug.log'), mode='a')
-        handler1.setLevel(logging.INFO)
-        handler2.setLevel(logging.INFO)
-        handler3.setLevel(logging.DEBUG)
-        # Set the format of the log messages
-        log_date_format = '%Y-%m-%d %H:%M:%S'
-        format = logging.Formatter(fmt = '%(asctime)s.%(msecs)03d,\t%(levelname)s,\t%(message)s', datefmt=log_date_format)
-        handler1.setFormatter(format)
-        handler2.setFormatter(format)
-        handler3.setFormatter(format)
-        # Create the logger
-        logger.addHandler(handler1)
-        if log_path is not None:
-            logger.addHandler(handler2)
-            if debug is True:
-                logger.addHandler(handler3)
-        self.logger = logger
-        self.logger.debug('Starting up server')
 
     def handle(self, message):
         message_dict = json.loads(message)
