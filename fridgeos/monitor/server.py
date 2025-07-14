@@ -20,7 +20,7 @@ class SimpleJSONhttpserver:
     def __init__(self, ip_address="localhost", port=8000):
         self.json_dict = {}
         self.httpd = ThreadingHTTPServer((ip_address, port), S)
-        self.httpd.json_dict = self.json_dict
+        self.httpd.json_dict = self.json_dict  # type: ignore[attr-defined]
         self.thread = threading.Thread(target=self.httpd.serve_forever, args=())
         self.thread.start()
 
