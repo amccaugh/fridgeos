@@ -5,6 +5,7 @@ import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import fridgeos.zmqhelper as zmqhelper
 from fridgeos import HALClient
+from fridgeos.logger import FridgeLogger
 
 class S(BaseHTTPRequestHandler):
     """ Taken from https://gist.github.com/nitaku/10d0662536f37a087e1b """
@@ -54,11 +55,13 @@ class MonitorServer:
         server every min_update_period seconds for the temperatures/heater
         values/state
         """
+        self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="Monitor").get_logger()
         self.metrics_server = MetricsServer(cryostat_name = cryostat_name, 
                                             ip_address="0.0.0.0",
                                             port=http_port)
         self.hal_client = HALClient(ip = hal_ip, port = hal_port)
         self.min_update_period = min_update_period # seconds
+        self.logger.info(f"MonitorServer started for cryostat '{cryostat_name}' on port {http_port}")
         self.run()
 
     def update(self):
@@ -78,9 +81,10 @@ class MonitorServer:
                                                  new_values_dict = heater_max_values)
 
         # FIXME implement state update
+        self.logger.debug('Metrics updated')
 
     def run(self):
-        print('Starting monitor server')
+        self.logger.info('Starting monitor server loop')
         while True:
             try:
                 time_start = time.time()
@@ -88,8 +92,8 @@ class MonitorServer:
                 while time.time() - time_start < self.min_update_period:
                     time.sleep(0.01)
             except KeyboardInterrupt:
-                print('Stopping monitor server')
+                self.logger.info('Stopping monitor server')
                 break
             except Exception as e:
-                print(e)
+                self.logger.error(f'Exception in monitor server: {e}', exc_info=True)
                 time.sleep(1)
