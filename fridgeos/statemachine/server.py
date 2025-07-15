@@ -248,7 +248,10 @@ class FridgeStateMachine(zmqhelper.Server):
         return False
 
     def make_transition(self, new_state):
-        """ Force a transition to the given state. """
+        """ Force a transition to the given state, only if it is a valid state. """
+        if new_state not in self.states:
+            self.logger.error(f"Attempted to transition to invalid state: '{new_state}'. Valid states: {list(self.states.keys())}")
+            return False
         self.logger.info(f'Transitioning from {self.current_state} to {new_state}')
         self.current_state = new_state
         self.state_entry_time = time.time()
