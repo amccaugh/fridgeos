@@ -14,7 +14,8 @@ coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 
 ###### States
 # Set values here to the nominal temperatures you want the heaters
-# to aim for while in that state.  The first state listed is the initial state
+# to aim for while in that state.  The first state listed is the initial state,
+# and ALL states must be enumerated here
 
 [states.warm]
 [states.warming_up]
