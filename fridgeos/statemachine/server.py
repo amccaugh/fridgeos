@@ -1,5 +1,4 @@
 #%%
-from fridgeos.monitor.server import MetricsServer
 from fridgeos.monitor.client import MonitorClient
 import tomllib
 import os
@@ -188,6 +187,7 @@ class FridgeStateMachine(zmqhelper.Server):
             elif command == 'set_state':
                 new_state = message_dict['state']
                 self.make_transition(new_state)
+                output = self.current_state
             else:
                 self.logger.error(f'Unrecognized command "{command}"')
         # Catch errors, log them, and return an empty dictionary

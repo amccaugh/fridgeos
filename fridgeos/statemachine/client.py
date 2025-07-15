@@ -24,3 +24,5 @@ class StateMachineClient:
 if __name__ == "__main__":
     state_machine_client = StateMachineClient(ip = '127.0.0.1', port = '5556')
     print(state_machine_client.get_state())
+    print(state_machine_client.set_state('warm'))
+    print(state_machine_client.set_state('ASDHFfjdhfafsj'))
