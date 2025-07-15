@@ -9,7 +9,7 @@ from fridgeos.logger import FridgeLogger
 
 class S(BaseHTTPRequestHandler):
     """ Taken from https://gist.github.com/nitaku/10d0662536f37a087e1b """
-    def do_GET(self):    
+    def do_GET(self):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -69,11 +69,13 @@ class MonitorServer:
         temperatures = self.hal_client.get_temperatures()
         self.metrics_server.update_metric_values(metric_name = 'temperatures',
                                                  new_values_dict = temperatures)
+        self.logger.debug(f'Updated temperatures: {list(temperatures.keys())}')
 
         # Get heater values from HAL
         heater_values = self.hal_client.get_heater_values()
         self.metrics_server.update_metric_values(metric_name = 'heaters',
                                                  new_values_dict = heater_values)
+        self.logger.debug(f'Updated heaters: {list(heater_values.keys())}')
 
         # Get heater max values from HAL
         heater_max_values = self.hal_client.get_heater_max_values()
@@ -81,7 +83,6 @@ class MonitorServer:
                                                  new_values_dict = heater_max_values)
 
         # FIXME implement state update
-        self.logger.debug('Metrics updated')
 
     def run(self):
         self.logger.info('Starting monitor server loop')
