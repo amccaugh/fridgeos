@@ -12,6 +12,6 @@ datasources:
     jsonData:
       sslmode: disable
       postgresVersion: 1500
-      timescaledb: false
+      timescaledb: true
     isDefault: true
     editable: true
