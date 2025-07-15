@@ -31,6 +31,7 @@ services:
       - postgres
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning
     networks:
       - grafana-network
 
