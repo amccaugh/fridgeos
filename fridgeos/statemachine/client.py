@@ -1,3 +1,4 @@
+#%%
 import fridgeos.zmqhelper as zmqhelper
 import time
 import json
@@ -21,5 +22,5 @@ class StateMachineClient:
         return self.send_command("set_state", state = state)
     
 if __name__ == "__main__":
-    state_machine_client = StateMachineClient(ip = '127.0.0.1', port = '5555')
-    state_machine_client.get_state()
+    state_machine_client = StateMachineClient(ip = '127.0.0.1', port = '5556')
+    print(state_machine_client.get_state())

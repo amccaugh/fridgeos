@@ -46,7 +46,6 @@ class FridgeStateMachine(zmqhelper.Server):
         
         self.logger.info(f"Fridge initialized. Initial state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.thermometers)} thermometers, {len(self.states)} states")
-        self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="StateMachine").logger
         super().__init__(port=5556, n_workers=1)
 
     def _parse_criterion(self, crit, constants=None):
@@ -186,7 +185,7 @@ class FridgeStateMachine(zmqhelper.Server):
         try:
             if command == 'get_state':
                 output = self.current_state
-            if command == 'set_state':
+            elif command == 'set_state':
                 new_state = message_dict['state']
                 self.make_transition(new_state)
             else:
@@ -281,9 +280,9 @@ class FridgeStateMachine(zmqhelper.Server):
                 self.update_heaters()
                 self.attempt_transition()
                 time.sleep(1)
-            except KeyboardInterrupt:
-                self.logger.info('State machine stopped by user')
-                break
+            # except KeyboardInterrupt:
+            #     self.logger.info('State machine stopped by user')
+            #     break
             except Exception as e:
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
                 time.sleep(1)
