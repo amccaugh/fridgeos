@@ -2,6 +2,7 @@
 from fridgeos import MonitorClient
 import psycopg2
 from datetime import datetime, timezone
+import time
 
 monitor_client = MonitorClient(url = 'http://localhost:8000/', timeout = 0.1)
 
@@ -51,5 +52,7 @@ def upload_temperatures_to_postgres(temperatures, fridgename):
             conn.close()
 
 if __name__ == "__main__":
-    temperatures, fridgename = get_temperature_data()
-    upload_temperatures_to_postgres(temperatures, fridgename)
+    while True:
+        temperatures, fridgename = get_temperature_data()
+        upload_temperatures_to_postgres(temperatures, fridgename)
+        time.sleep(1)
