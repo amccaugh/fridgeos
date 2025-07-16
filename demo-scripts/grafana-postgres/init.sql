@@ -12,3 +12,4 @@ GRANT CONNECT ON DATABASE fridgedb TO fridgeosuser;
 GRANT USAGE ON SCHEMA public TO fridgeosuser;
 GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO fridgeosuser;
 GRANT SELECT, INSERT ON TABLE cryostat_temperatures TO fridgeosuser;
+ALTER ROLE fridgeosuser SET statement_timeout = '60s';
