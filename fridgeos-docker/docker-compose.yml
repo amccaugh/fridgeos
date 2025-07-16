@@ -40,17 +40,14 @@ services:
       - postgres
 
   hal:
-    image: python:3.12-alpine
+    build: .
     container_name: hal-server
     privileged: true
     volumes:
-      - ./config:/app/config/
       - ./logs:/app/logs/
-      - ./scripts:/app/scripts/
-      - ../fridgeos:/app/fridgeos-src/
       - ${SERIAL_DEVICE_PATH:-/tmp/no-serial}:/dev/serial/
     working_dir: /app
-    command: sh -c "pip install -e fridgeos-src/ && python scripts/hal-server.py"
+    command: python scripts/hal-server.py
     ports:
       - "5555:5555"
     networks:
@@ -58,15 +55,12 @@ services:
     restart: unless-stopped
 
   statemachine:
-    image: python:3.12-alpine
+    build: .
     container_name: statemachine-server
     volumes:
-      - ./config:/app/config/
       - ./logs:/app/logs/
-      - ./scripts:/app/scripts/
-      - ../fridgeos:/app/fridgeos-src/
     working_dir: /app
-    command: sh -c "pip install -e fridgeos-src/ && python scripts/statemachine-server.py"
+    command: python scripts/statemachine-server.py
     ports:
       - "5556:5556"
     networks:
@@ -74,15 +68,12 @@ services:
     restart: unless-stopped
 
   monitor:
-    image: python:3.12-alpine
+    build: .
     container_name: monitor-server
     volumes:
-      - ./config:/app/config/
       - ./logs:/app/logs/
-      - ./scripts:/app/scripts/
-      - ../fridgeos:/app/fridgeos-src/
     working_dir: /app
-    command: sh -c "pip install -e fridgeos-src/ && python scripts/monitor-server.py"
+    command: python scripts/monitor-server.py
     ports:
       - "8000:8000"
     networks:
