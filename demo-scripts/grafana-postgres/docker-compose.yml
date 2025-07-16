@@ -8,6 +8,7 @@ services:
       POSTGRES_DB: fridgedb
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: grafana123
+      FRIDGEOS_PASSWORD: fridgeos123
     ports:
       - "5432:5432"
     volumes:
