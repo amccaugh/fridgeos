@@ -14,6 +14,7 @@ from fridgeos.hal.drivers.korad_kd3005p import KD3005P
 from fridgeos.hal.drivers.srs_sim921 import SIM921
 from fridgeos.hal.drivers.srs_sim922 import SIM922
 from fridgeos.hal.drivers.swarm import Lockin, Diode, PumpHeater, HeatSwitch, WarmupHeater
+from fridgeos.hal.drivers.dummy import DummyThermometer, DummyHeater
 
 ### HEATERS
 
@@ -53,6 +54,16 @@ class SWARM_LPH():
     def get_heater_value(self):
         return self.heater.get_heat_switch_voltage()
 
+class DummyHeater_HAL():
+    def setup(self, address):
+        self.heater = DummyHeater(address)
+    
+    def set_heater_value(self, value):
+        self.heater.set_voltage(value)
+    
+    def get_heater_value(self):
+        return self.heater.get_voltage()
+
 
 ### THERMOMETERS 
 
@@ -84,6 +95,13 @@ class SWARM_DIODE():
     def get_temperature(self):
         return self.thermometer.read_temp()
 
+class DummyThermometer_HAL():
+    def setup(self, address):
+        self.thermometer = DummyThermometer(address)
+    
+    def get_temperature(self):
+        return self.thermometer.read_temperature()
+
 
 hal_classes = {
     'korad-kd3005p': HAL_KD3005P,
@@ -92,5 +110,7 @@ hal_classes = {
     'swarm_lockin': SWARM_LOCKIN,
     'swarm_diode': SWARM_DIODE,
     'swarm_hph': SWARM_HPH,
-    'swarm_lph': SWARM_LPH
+    'swarm_lph': SWARM_LPH,
+    'DummyThermometer': DummyThermometer_HAL,
+    'DummyHeater': DummyHeater_HAL
 }

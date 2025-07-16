@@ -57,15 +57,16 @@ services:
       - fridgeos-network
     restart: unless-stopped
 
-  fridgestatemachine:
+  statemachine:
     image: python:3.12-alpine
-    container_name: fridgestatemachine-server
+    container_name: statemachine-server
     volumes:
       - ./config:/app/config/
       - ./logs:/app/logs/
+      - ./scripts:/app/scripts/
       - ../fridgeos:/app/fridgeos-src/
     working_dir: /app
-    command: sh -c "pip install -e fridgeos-src/ && python -m fridgeos.statemachine.server"
+    command: sh -c "pip install -e fridgeos-src/ && python scripts/statemachine-server.py"
     ports:
       - "5556:5556"
     networks:

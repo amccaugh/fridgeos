@@ -22,7 +22,7 @@ class HALServer(zmqhelper.Server):
         self.hardware['thermometers'] = {}
         self.hardware['heaters'] = {}
         self.load_hardware(hardware_toml_path)
-        self.logger = FridgeLogger(log_path, debug, logger_name='HAL').logger
+        self.logger = FridgeLogger(log_path, logger_name='HAL', debug = debug).logger
         super().__init__(port, n_workers)
         print('HAL Server started')
     
@@ -91,6 +91,8 @@ class HALServer(zmqhelper.Server):
                 print(f'Attempting to setup {hw_name} hardware with setup arguments {hw}["setup"]')
                 # Configure the device
                 print(hw)
+                if 'setup' not in hw:
+                    hw['setup'] = {}
                 python_object.setup(**hw['setup'])
                 print(f'Added {hw["hardware"]} thermometer successfully')
                 # Add the thermometer object to self.thermometers dictionary

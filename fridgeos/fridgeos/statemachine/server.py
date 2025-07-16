@@ -29,7 +29,7 @@ class DummyHalClient:
 
 
 
-class FridgeStateMachine(zmqhelper.Server):
+class StateMachineServer(zmqhelper.Server):
     def __init__(self, config_path, log_path, monitor_client, hal_client, debug=True):
         self.logger = FridgeLogger(log_path=log_path, debug=debug, logger_name="StateMachine").logger
         self.logger.info(f"Initializing Fridge with config: {config_path}")
@@ -288,27 +288,27 @@ class FridgeStateMachine(zmqhelper.Server):
                 time.sleep(1)
 
 
-monitor_client = MonitorClient(url = 'http://qittlab-nuc-02.campus.nist.gov:8000/', timeout = 0.1)
-# monitor_client.set_metric('1K', 300)
-# monitor_client.set_metric('1K-main-plate', 300)
-# monitor_client.set_metric('4K', 300)
-# monitor_client.set_metric('40K', 300)
-# monitor_client.set_metric('pump', 300)
-# monitor_client.set_metric('heat_switch', 300)
-print(monitor_client.get_metrics())
+# monitor_client = MonitorClient(url = 'http://qittlab-nuc-02.campus.nist.gov:8000/', timeout = 0.1)
+# # monitor_client.set_metric('1K', 300)
+# # monitor_client.set_metric('1K-main-plate', 300)
+# # monitor_client.set_metric('4K', 300)
+# # monitor_client.set_metric('40K', 300)
+# # monitor_client.set_metric('pump', 300)
+# # monitor_client.set_metric('heat_switch', 300)
+# print(monitor_client.get_metrics())
 
-hal_client = DummyHalClient()
-fridge = FridgeStateMachine(
-    config_path = 'state_machine_1k.toml', 
-    log_path = 'logs',
-    monitor_client = monitor_client,
-    hal_client = hal_client,
-    debug = True
-)
+# hal_client = DummyHalClient()
+# fridge = StateMachine(
+#     config_path = 'state_machine_1k.toml', 
+#     log_path = 'logs',
+#     monitor_client = monitor_client,
+#     hal_client = hal_client,
+#     debug = True
+# )
 
 
-print(f'Fridge state: {fridge.current_state}')
-fridge.attempt_transition()
+# print(f'Fridge state: {fridge.current_state}')
+# fridge.attempt_transition()
 
 
 # %%
