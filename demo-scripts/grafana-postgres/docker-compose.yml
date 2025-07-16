@@ -2,16 +2,17 @@ version: '3.8'
 
 services:
   postgres:
-    image: timescale/timescaledb-ha:pg15-latest
+    image: timescale/timescaledb-ha:pg17
     container_name: postgres-db
     environment:
-      POSTGRES_DB: grafana
+      POSTGRES_DB: fridgedb
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: grafana123
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - grafana-network
     healthcheck:
@@ -27,7 +28,7 @@ services:
     environment:
       - GF_DATABASE_TYPE=postgres
       - GF_DATABASE_HOST=postgres:5432
-      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_NAME=fridgedb
       - GF_DATABASE_USER=grafana
       - GF_DATABASE_PASSWORD=grafana123
       - GF_DATABASE_SSL_MODE=disable
