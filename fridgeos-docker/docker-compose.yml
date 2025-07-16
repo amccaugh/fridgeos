@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: fridgedb
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: grafana123
+      FRIDGEOS_PASSWORD: fridgeos123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-app
+    environment:
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres:5432
+      - GF_DATABASE_NAME=fridgedb
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=grafana123
+      - GF_DATABASE_SSL_MODE=disable
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  hal:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: hal-server
+    privileged: true
+    volumes:
+      - ./config:/app/config/
+      - ./logs:/app/logs/
+      - /dev/serial:/dev/serial/
+    command: ["python", "-m", "fridgeos.hal.server"]
+    ports:
+      - "5555:5555"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+
+  fridgestatemachine:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: fridgestatemachine-server
+    volumes:
+      - ./config:/app/config/
+      - ./logs:/app/logs/
+    command: ["python", "-m", "fridgeos.statemachine.server"]
+    ports:
+      - "5556:5556"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+
+  monitor:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: monitor-server
+    volumes:
+      - ./config:/app/config/
+      - ./logs:/app/logs/
+    command: ["python", "-m", "fridgeos.monitor.server"]
+    ports:
+      - "8000:8000"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  fridgeos-network:
+    driver: bridge
