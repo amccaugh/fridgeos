@@ -1,3 +1,4 @@
+#%%
 #!/usr/bin/env python3
 """
 Demo script to generate fake temperature data for Grafana visualization.
@@ -46,7 +47,7 @@ def generate_temperature_data(fridgename, sensorname, start_time, duration_hours
             'time': current_time,
             'fridgename': fridgename,
             'sensorname': sensorname,
-            'temperature': temperature
+            'temperature': float(temperature)
         })
         
         current_time += timedelta(seconds=interval_seconds)
