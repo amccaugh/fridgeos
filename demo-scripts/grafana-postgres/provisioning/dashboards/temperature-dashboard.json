@@ -41,8 +41,11 @@
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
-              "type": "linear"
+              "type": "log",
+              "log": 10
             },
+            "softMin": 0.1,
+            "softMax": 400,
             "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
