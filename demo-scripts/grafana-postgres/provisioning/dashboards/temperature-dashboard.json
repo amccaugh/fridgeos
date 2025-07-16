@@ -121,6 +121,96 @@
       ],
       "title": "Cryostat Temperatures",
       "type": "timeseries"
+    },
+    {
+      "datasource": "PostgreSQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "kelvin"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Minutes Ago"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "min"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Sensor"
+          }
+        ]
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  fridgename || ' - ' || sensorname AS \"Sensor\",\n  ROUND(temperature::numeric, 2) AS \"Temperature (K)\",\n  ROUND(EXTRACT(EPOCH FROM (NOW() - time)) / 60.0, 1) AS \"Minutes Ago\"\nFROM temperatures t1\nWHERE time = (\n  SELECT MAX(time) \n  FROM temperatures t2 \n  WHERE t2.fridgename = t1.fridgename \n  AND t2.sensorname = t1.sensorname\n)\nORDER BY fridgename, sensorname",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Current Temperatures",
+      "type": "table"
     }
   ],
   "refresh": "5m",
