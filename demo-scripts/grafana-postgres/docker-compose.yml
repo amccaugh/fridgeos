@@ -16,12 +16,12 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - grafana-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U grafana"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U grafana"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 30s
 
   grafana:
     image: grafana/grafana:latest
@@ -35,9 +35,9 @@ services:
       - GF_DATABASE_SSL_MODE=disable
     ports:
       - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
