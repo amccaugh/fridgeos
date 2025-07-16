@@ -40,7 +40,9 @@ services:
       - postgres
 
   hal:
-    build: .
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
     container_name: hal-server
     privileged: true
     volumes:
@@ -55,7 +57,9 @@ services:
     restart: unless-stopped
 
   statemachine:
-    build: .
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
     container_name: statemachine-server
     volumes:
       - ./logs:/app/logs/
@@ -68,7 +72,9 @@ services:
     restart: unless-stopped
 
   monitor:
-    build: .
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
     container_name: monitor-server
     volumes:
       - ./logs:/app/logs/
