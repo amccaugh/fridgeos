@@ -23,6 +23,7 @@ class HALServer(zmqhelper.Server):
         self.hardware['heaters'] = {}
         self.load_hardware(hardware_toml_path)
         self.logger = FridgeLogger(log_path, logger_name='HAL', debug = debug).logger
+        self.logger.info(f"HAL Server initialized with {len(self.hardware['thermometers'])} thermometers and {len(self.hardware['heaters'])} heaters")
         super().__init__(port, n_workers)
         print('HAL Server started')
     
@@ -38,7 +39,7 @@ class HALServer(zmqhelper.Server):
     def handle(self, message):
         message_dict = json.loads(message)
         command = message_dict['cmd'].lower()
-        self.logger.debug(f"Message received: '{message}'")
+        self.logger.debug(f"Received command: {command}")
         
         try:
             if command == 'get_temperature':
@@ -47,6 +48,7 @@ class HALServer(zmqhelper.Server):
             elif command == 'get_temperatures':
                 output = self.get_temperatures()
             elif command == 'set_heater_value':
+                self.logger.debug(f"Setting heater {message_dict['name']} to {message_dict['value']}")
                 name = message_dict['name']
                 value = message_dict['value']
                 output = self.set_heater_value(name, value)
@@ -61,20 +63,23 @@ class HALServer(zmqhelper.Server):
                 self.logger.error(f'Unrecognized command "{command}"')
         # Catch errors, log them, and return an empty dictionary
         except Exception as e:
-            self.logger.error('Python error:', exc_info=e)
+            self.logger.error(f'Error handling command "{command}": {e}')
             output = {}
 
         message_out = json.dumps(output)
-        self.logger.debug(f"Sending message: '{message_out}'")
+        self.logger.debug(f"Sending response: '{message_out}'")
         return message_out               
 
     def load_hardware(self, hardware_toml_path):
+        self.logger.info(f"Loading hardware configuration from: {hardware_toml_path}")
+        
         # Load the TOML file
         with open(hardware_toml_path, "rb") as f:
             all_hardware = tomllib.load(f)
         # For each type of hardware (e.g heater/thermometer), go through each
         # device in the hardware_list, create a Python object, and set it up
         for hardware_type, hardware_list in all_hardware.items():
+            self.logger.info(f"Loading {len(hardware_list)} {hardware_type}")
             # Check for duplicate names
             names = [h['name'] for h in hardware_list]
             if len(names) != len(set(names)):
@@ -99,6 +104,7 @@ class HALServer(zmqhelper.Server):
                 hw['python_object'] = python_object
                 name = hw.pop('name')
                 self.hardware[hardware_type][name] = hw
+                self.logger.debug(f"Loaded {hardware_type}: {name}")
 
     def get_temperature(self, name):
         """ Get the temperature of a single thermometer """
