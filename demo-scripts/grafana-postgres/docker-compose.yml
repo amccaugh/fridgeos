@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./provisioning:/etc/grafana/provisioning
+      - ./grafana-provisioning:/etc/grafana/provisioning
     networks:
       - grafana-network
 
