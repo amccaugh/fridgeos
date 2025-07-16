@@ -5,7 +5,7 @@ datasources:
     type: postgres
     access: proxy
     url: postgres:5432
-    database: grafana
+    database: fridgedb
     user: grafana
     secureJsonData:
       password: grafana123
