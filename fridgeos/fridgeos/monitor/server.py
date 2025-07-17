@@ -1,51 +1,11 @@
-import json
-import threading 
 import time
-import datetime
-from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-import fridgeos.zmqhelper as zmqhelper
 from fridgeos.hal.client  import HALClient
 from fridgeos.statemachine.client import StateMachineClient
 from fridgeos.logger import FridgeLogger
-
-class S(BaseHTTPRequestHandler):
-    """ Taken from https://gist.github.com/nitaku/10d0662536f37a087e1b """
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        sec_last_update = round(time.time() - self.server.json_dict['metadata']['last_update_time'],3)  # type: ignore[attr-defined]
-        self.server.json_dict['metadata']['seconds_since_last_update'] = sec_last_update  # type: ignore[attr-defined]
-        self.wfile.write(json.dumps(self.server.json_dict).encode(encoding='utf_8'))  # type: ignore[attr-defined]
-
-class SimpleJSONhttpserver:
-    def __init__(self, ip_address="localhost", port=8000):
-        self.json_dict = {}
-        self.httpd = ThreadingHTTPServer((ip_address, port), S)
-        self.httpd.json_dict = self.json_dict  # type: ignore[attr-defined]
-        self.thread = threading.Thread(target=self.httpd.serve_forever, args=())
-        self.thread.start()
-
-class MetricsServer:
-    def __init__(self, cryostat_name, ip_address="localhost", port=8000):
-        self.server = SimpleJSONhttpserver(ip_address=ip_address, port=port)
-        self.server.json_dict['metadata'] = {'cryostat_name' : cryostat_name,
-                                             'seconds_since_last_update' : -1,
-                                             'last_update_time' : time.time(),
-                                             'last_update_datetime' : str(datetime.datetime.now())}
-
-    def update_time(self):
-        self.server.json_dict['metadata']['last_update_time'] = time.time()
-        self.server.json_dict['metadata']['last_update_datetime'] = str(datetime.datetime.now())
-    
-    def update_metric_values(self, metric_name, new_values_dict):
-        self.server.json_dict[metric_name] = new_values_dict
-        self.update_time()
-
+from fridgeos.metricserver import MetricServer
 
 class MonitorServer:
     def __init__(self,
-                 cryostat_name,
                  http_port,
                  hal_ip,
                  hal_port,
@@ -59,13 +19,11 @@ class MonitorServer:
         values/state
         """
         self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="Monitor").logger
-        self.metrics_server = MetricsServer(cryostat_name = cryostat_name, 
-                                            ip_address="0.0.0.0",
-                                            port=http_port)
+        self.metrics_server = MetricServer(ip_address="0.0.0.0", port=http_port)
         self.hal_client = HALClient(ip = hal_ip, port = hal_port)
         self.statemachine_client = StateMachineClient(ip = statemachine_ip, port = statemachine_port)
         self.min_update_period = min_update_period # seconds
-        self.logger.info(f"MonitorServer started for cryostat '{cryostat_name}' on port {http_port}")
+        self.logger.info(f"MonitorServer started on port {http_port}")
         self.run()
 
     def update(self):
