@@ -21,8 +21,8 @@ class HALServer(zmqhelper.Server):
         self.hardware = {}
         self.hardware['thermometers'] = {}
         self.hardware['heaters'] = {}
-        self.load_hardware(hardware_toml_path)
         self.logger = FridgeLogger(log_path, logger_name='HAL', debug = debug).logger
+        self.load_hardware(hardware_toml_path)
         self.logger.info(f"HAL Server initialized with {len(self.hardware['thermometers'])} thermometers and {len(self.hardware['heaters'])} heaters")
         super().__init__(port, n_workers)
         print('HAL Server started')
