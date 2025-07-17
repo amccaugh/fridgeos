@@ -1,5 +1,4 @@
 #%%
-from fridgeos.monitor.client import MonitorClient
 import tomllib
 import os
 import time
@@ -287,28 +286,3 @@ class StateMachineServer(zmqhelper.Server):
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
                 time.sleep(1)
 
-
-# monitor_client = MonitorClient(url = 'http://qittlab-nuc-02.campus.nist.gov:8000/', timeout = 0.1)
-# # monitor_client.set_metric('1K', 300)
-# # monitor_client.set_metric('1K-main-plate', 300)
-# # monitor_client.set_metric('4K', 300)
-# # monitor_client.set_metric('40K', 300)
-# # monitor_client.set_metric('pump', 300)
-# # monitor_client.set_metric('heat_switch', 300)
-# print(monitor_client.get_metrics())
-
-# hal_client = DummyHalClient()
-# fridge = StateMachine(
-#     config_path = 'state_machine_1k.toml', 
-#     log_path = 'logs',
-#     monitor_client = monitor_client,
-#     hal_client = hal_client,
-#     debug = True
-# )
-
-
-# print(f'Fridge state: {fridge.current_state}')
-# fridge.attempt_transition()
-
-
-# %%

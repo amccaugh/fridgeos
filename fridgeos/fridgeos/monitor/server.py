@@ -4,7 +4,8 @@ import time
 import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import fridgeos.zmqhelper as zmqhelper
-from fridgeos import HALClient
+from fridgeos.hal.client  import HALClient
+from fridgeos.statemachine.client import StateMachineClient
 from fridgeos.logger import FridgeLogger
 
 class S(BaseHTTPRequestHandler):
@@ -48,6 +49,8 @@ class MonitorServer:
                  http_port,
                  hal_ip,
                  hal_port,
+                 statemachine_ip,
+                 statemachine_port,
                  min_update_period = 1,
         ):
         """ Create an HTTP server on port http_port that displays the metrics of
@@ -60,6 +63,7 @@ class MonitorServer:
                                             ip_address="0.0.0.0",
                                             port=http_port)
         self.hal_client = HALClient(ip = hal_ip, port = hal_port)
+        self.statemachine_client = StateMachineClient(ip = statemachine_ip, port = statemachine_port)
         self.min_update_period = min_update_period # seconds
         self.logger.info(f"MonitorServer started for cryostat '{cryostat_name}' on port {http_port}")
         self.run()
@@ -82,7 +86,20 @@ class MonitorServer:
         self.metrics_server.update_metric_values(metric_name = 'heater_max_values',
                                                  new_values_dict = heater_max_values)
 
-        # FIXME implement state update
+        # Get state from StateMachine
+        try:
+            state_response = self.statemachine_client.get_state()
+            if isinstance(state_response, dict) and 'state' in state_response:
+                state = state_response['state']
+            else:
+                state = str(state_response)
+            self.metrics_server.update_metric_values(metric_name = 'state',
+                                                     new_values_dict = state)
+            self.logger.debug(f'Updated state: {state}')
+        except Exception as e:
+            self.logger.warning(f'Failed to get state from StateMachine: {e}')
+            self.metrics_server.update_metric_values(metric_name = 'state',
+                                                     new_values_dict = 'unknown')
 
     def run(self):
         self.logger.info('Starting monitor server loop')

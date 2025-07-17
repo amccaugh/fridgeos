@@ -1,3 +1,3 @@
 - Have scraper not upload if last_update_time is > 60 sec
-- Create a new "state" table, make the database-scraper upload it to that table, and create a grafana panel underneath the existing panels with a "state timeline"
 - Create a new "heaters" databse table, make the database-scraper upload it to that table, and create a grafana panel called "Heater values" underneath the existing panels with a time series visualization
+- Change it so MonitorServer takes hal_client and statemachine_client directly, not hal_ip, hal_port, statemachine_ip, statemachine_port, to be more like StateMachineServer
