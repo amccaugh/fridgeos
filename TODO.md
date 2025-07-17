@@ -1,1 +1,3 @@
 - Have scraper not upload if last_update_time is > 60 sec
+- Create a new "state" table, make the database-scraper upload it to that table, and create a grafana panel underneath the existing panels with a "state timeline"
+- Create a new "heaters" databse table, make the database-scraper upload it to that table, and create a grafana panel called "Heater values" underneath the existing panels with a time series visualization

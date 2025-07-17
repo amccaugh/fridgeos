@@ -15,6 +15,12 @@ services:
     networks:
       - fridgeos-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grafana -d fridgedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   grafana:
     image: grafana/grafana:latest
@@ -35,7 +41,9 @@ services:
       - fridgeos-network
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+        restart: true
 
   hal:
     build:
@@ -97,8 +105,11 @@ services:
       - fridgeos-network
     restart: unless-stopped
     depends_on:
-      - postgres
-      - monitor
+      postgres:
+        condition: service_healthy
+        restart: true
+      monitor:
+        condition: service_started
 
 volumes:
   postgres_data:
