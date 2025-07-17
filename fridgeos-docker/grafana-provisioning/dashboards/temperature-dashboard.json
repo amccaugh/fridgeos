@@ -97,7 +97,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time AS \"time\",\n  temperature,\n  fridgename || ' - ' || sensorname AS metric\nFROM temperatures\nWHERE\n  $__timeFilter(time)\nORDER BY time",
+          "rawSql": "SELECT\n  (unnest(lttb(time, temperature, 10000))).*,\n  sensorname AS metric\nFROM temperatures\nWHERE\n  $__timeFilter(time)\nGROUP BY metric\nORDER BY time;",
           "refId": "A",
           "select": [
             [
