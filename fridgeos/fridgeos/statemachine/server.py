@@ -7,6 +7,7 @@ from simple_pid import PID
 import fridgeos.zmqhelper as zmqhelper
 import json
 from fridgeos.logger import FridgeLogger
+from fridgeos.metricserver import MetricServer
 
 class DummyMonitorClient:
     def __init__(self):
@@ -28,8 +29,8 @@ class DummyHalClient:
 
 
 
-class StateMachineServer(zmqhelper.Server):
-    def __init__(self, config_path, log_path, monitor_client, hal_client, debug=True):
+class StateMachineServer(MetricServer):
+    def __init__(self, config_path, log_path, monitor_client, hal_client, debug=True, http_port=8001):
         self.logger = FridgeLogger(log_path=log_path, debug=debug, logger_name="StateMachine").logger
         self.logger.info(f"Initializing Fridge with config: {config_path}")
         
@@ -44,7 +45,9 @@ class StateMachineServer(zmqhelper.Server):
         
         self.logger.info(f"Fridge initialized. Initial state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.thermometers)} thermometers, {len(self.states)} states")
-        super().__init__(port=5556, n_workers=1)
+        super().__init__(ip_address="0.0.0.0", port=http_port)
+        # Initial metric
+        self.update_metric_values('state', self.current_state)
 
     def _parse_criterion(self, crit, constants=None):
         """
@@ -174,30 +177,6 @@ class StateMachineServer(zmqhelper.Server):
         return parsed_states
 
         
-    def handle(self, message):
-        """ ZMQ helper method to handle messages from the client. """
-        message_dict = json.loads(message)
-        command = message_dict['cmd'].lower()
-        self.logger.debug(f"Message received: '{message}'")
-        
-        try:
-            if command == 'get_state':
-                output = self.current_state
-            elif command == 'set_state':
-                new_state = message_dict['state']
-                self.make_transition(new_state)
-                output = self.current_state
-            else:
-                self.logger.error(f'Unrecognized command "{command}"')
-        # Catch errors, log them, and return an empty dictionary
-        except Exception as e:
-            self.logger.error('Python error:', exc_info=e)
-            output = {}
-
-        message_out = json.dumps(output)
-        self.logger.debug(f"Sending message: '{message_out}'")
-        return message_out               
-
     def update_heater_setpoints(self, new_state):
         self.logger.info(f"Updating heater setpoints for state: {new_state}")
         thermometer_config = self.states[new_state]
@@ -254,6 +233,7 @@ class StateMachineServer(zmqhelper.Server):
         self.current_state = new_state
         self.state_entry_time = time.time()
         self.update_heater_setpoints(new_state)
+        self.update_metric_values('state', self.current_state)
         return True
 
     def update_heaters(self):
@@ -278,10 +258,9 @@ class StateMachineServer(zmqhelper.Server):
             try:
                 self.update_heaters()
                 self.attempt_transition()
+                # Always update the state metric
+                self.update_metric_values('state', self.current_state)
                 time.sleep(1)
-            # except KeyboardInterrupt:
-            #     self.logger.info('State machine stopped by user')
-            #     break
             except Exception as e:
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
                 time.sleep(1)

@@ -12,4 +12,5 @@ server = StateMachineServer(
     monitor_client=monitor_client,
     hal_client=halclient,
     debug = True,
+    http_port=8001,  # Explicitly set, but matches default
 )
