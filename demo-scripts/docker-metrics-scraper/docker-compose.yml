@@ -1,9 +1,0 @@
-services:
-  scraper:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - ./config:/app/config/
-    command: ["python", "scrape_script.py"]
-    restart: always
