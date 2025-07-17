@@ -3,10 +3,26 @@ import threading
 import time
 import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
 
 class S(BaseHTTPRequestHandler):
     """ Taken from https://gist.github.com/nitaku/10d0662536f37a087e1b """
     def do_GET(self):
+        # Parse URL and query parameters
+        parsed_url = urlparse(self.path)
+        query_params = parse_qs(parsed_url.query)
+        
+        # Check if MetricServer instance has a handle_query method
+        if hasattr(self.server, 'metricserver_instance') and hasattr(self.server.metricserver_instance, 'handle_query'):
+            result = self.server.metricserver_instance.handle_query(query_params)
+            if result is not None:
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(result.encode('utf-8'))
+                return
+        
+        # Default behavior: return JSON metrics
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -14,30 +30,6 @@ class S(BaseHTTPRequestHandler):
         self.server.json_dict['metadata']['seconds_since_last_update'] = sec_last_update  # type: ignore[attr-defined]
         self.wfile.write(json.dumps(self.server.json_dict).encode(encoding='utf_8'))  # type: ignore[attr-defined]
 
-    def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        post_data = self.rfile.read(content_length)
-        try:
-            data = json.loads(post_data)
-        except Exception:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b'Invalid JSON')
-            return
-        # Call the handler on the MetricServer instance
-        result = self.server.metricserver_instance.handle_post(data)
-        if result is None:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b'POST handler returned None')
-        else:
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(result.encode('utf-8'))
-
-    def handle_post(self, data):
-        # Default handler: not implemented
-        return "POST handler not implemented"
 
 class SimpleJSONhttpserver:
     def __init__(self, ip_address="localhost", port=8000):

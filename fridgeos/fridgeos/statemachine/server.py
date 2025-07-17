@@ -59,17 +59,19 @@ class StateMachineServer(MetricServer):
         self.update_metric_values('state', self.current_state)
 
 
-    def handle_post(self, data):
-        # Allow setting the state via HTTP POST
-        self.logger.debug(f"Received POST request: {data}")
-        if 'state' in data:
-            result = self.make_transition(data['state'])
+
+    def handle_query(self, query_params):
+        # Handle query parameters like ?state=warm
+        self.logger.debug(f"Received query parameters: {query_params}")
+        if 'state' in query_params:
+            # query_params['state'] is a list, take first value
+            state = query_params['state'][0]
+            result = self.make_transition(state)
             if result:
-                return "State updated"
+                return f"State successfully changed to: {state}"
             else:
-                return "Invalid state"
-        else:
-            return 'Missing "state" in POST'
+                return f"Invalid state: {state}. Valid states: {list(self.states.keys())}"
+        return None  # Return None to use default JSON response
 
     def _parse_criterion(self, crit, constants=None):
         """
