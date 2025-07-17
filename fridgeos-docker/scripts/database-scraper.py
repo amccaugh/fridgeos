@@ -4,7 +4,7 @@ import psycopg2
 from datetime import datetime, timezone
 import time
 
-monitor_client = MonitorClient(url = 'http://localhost:8000/', timeout = 0.1)
+monitor_client = MonitorClient(url = 'http://monitor:8000/', timeout = 0.1)
 
 def get_temperature_data():
     """Get temperature data from monitor client"""
@@ -24,7 +24,7 @@ def upload_temperatures_to_postgres(temperatures):
     
     try:
         conn = psycopg2.connect(
-            host='localhost',
+            host='postgres',
             port=5432,
             user='fridgeosuser',
             password='fridgeos123',

@@ -84,6 +84,22 @@ services:
       - fridgeos-network
     restart: unless-stopped
 
+  database-scraper:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: database-scraper
+    volumes:
+      - ./logs:/app/logs/
+    working_dir: /app
+    command: python scripts/database-scraper.py
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - monitor
+
 volumes:
   postgres_data:
   grafana_data:
