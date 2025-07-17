@@ -11,9 +11,18 @@ from fridgeos.metricserver import MetricServer
 
 class DummyMonitorClient:
     def __init__(self):
-        self.metrics = {}
+        self.metrics = {
+            'temperatures': {
+                '1K': 290,
+                '1K-main-plate': 290,
+                '4K': 290,
+                '40K': 290,
+                'pump': 290,
+                'heat_switch': 290
+            }
+        }
     
-    def get_temperatures(self):
+    def get_metrics(self):
         return self.metrics
     
     def set_metric(self, name, value):
@@ -48,6 +57,19 @@ class StateMachineServer(MetricServer):
         super().__init__(ip_address="0.0.0.0", port=http_port)
         # Initial metric
         self.update_metric_values('state', self.current_state)
+
+
+    def handle_post(self, data):
+        # Allow setting the state via HTTP POST
+        self.logger.debug(f"Received POST request: {data}")
+        if 'state' in data:
+            result = self.make_transition(data['state'])
+            if result:
+                return "State updated"
+            else:
+                return "Invalid state"
+        else:
+            return 'Missing "state" in POST'
 
     def _parse_criterion(self, crit, constants=None):
         """
@@ -238,7 +260,7 @@ class StateMachineServer(MetricServer):
 
     def update_heaters(self):
         # Get temperatures from MonitorClient
-        self.current_temperatures = self.monitor_client.get_temperatures()
+        self.current_temperatures = self.monitor_client.get_metrics()['temperatures']
         self.logger.debug(f"Current temperatures: {self.current_temperatures}")
         # For each thermometer listed in the monitor
         for thermometer_name, T in self.current_temperatures.items():
@@ -250,7 +272,9 @@ class StateMachineServer(MetricServer):
                     pid_controller = self.thermometers[thermometer_name]['pid_controller']
                     new_value = pid_controller(T)
                     self.logger.debug(f'Setting heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
-                    self.hal_client.set_heater(heater_name, new_value)
+                    self.hal_client.set_heater_value(heater_name, new_value)
+
+
 
     def run(self):
         self.logger.info('Starting state machine loop')
@@ -265,3 +289,14 @@ class StateMachineServer(MetricServer):
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
                 time.sleep(1)
 
+
+if __name__ == '__main__':
+    server = StateMachineServer(
+        config_path = './config/statemachine.toml',
+        log_path='./logs/',
+        monitor_client=DummyMonitorClient(),
+        hal_client=DummyHalClient(),
+        debug = True,
+        http_port=8001,  # Explicitly set, but matches default
+    )
+    server.run()
