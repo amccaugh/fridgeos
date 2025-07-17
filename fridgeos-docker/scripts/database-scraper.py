@@ -11,14 +11,12 @@ def get_temperature_data():
     try:
         all_metrics = monitor_client.get_metrics()
         temperatures = all_metrics.get('temperatures', {})
-        metadata = all_metrics.get('metadata', {})
-        fridgename = metadata.get('cryostat_name', 'unknown')
-        return temperatures, fridgename
+        return temperatures
     except Exception as e:
         print(f"Error getting temperature data: {e}")
         return {}, 'unknown'
 
-def upload_temperatures_to_postgres(temperatures, fridgename):
+def upload_temperatures_to_postgres(temperatures):
     """Upload temperature data to postgres temperatures table"""
     if not temperatures:
         print("No temperature data to upload")
@@ -38,9 +36,9 @@ def upload_temperatures_to_postgres(temperatures, fridgename):
             timestamp = datetime.now(timezone.utc)
             
             for sensorname, temperature in temperatures.items():
-                sql = """INSERT INTO temperatures (time, fridgename, sensorname, temperature) 
-                        VALUES (%s, %s, %s, %s)"""
-                cursor.execute(sql, (timestamp, fridgename, sensorname, temperature))
+                sql = """INSERT INTO temperatures (time, sensorname, temperature) 
+                        VALUES (%s, %s, %s)"""
+                cursor.execute(sql, (timestamp, sensorname, temperature))
             
             conn.commit()
             print(f"Successfully uploaded {len(temperatures)} temperature readings")
@@ -53,6 +51,6 @@ def upload_temperatures_to_postgres(temperatures, fridgename):
 
 if __name__ == "__main__":
     while True:
-        temperatures, fridgename = get_temperature_data()
-        upload_temperatures_to_postgres(temperatures, fridgename)
+        temperatures = get_temperature_data()
+        upload_temperatures_to_postgres(temperatures)
         time.sleep(1)

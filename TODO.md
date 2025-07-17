@@ -1,0 +1,1 @@
+- Have scraper not upload if last_update_time is > 60 sec

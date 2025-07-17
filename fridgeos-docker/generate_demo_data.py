@@ -20,7 +20,7 @@ DB_CONFIG = {
     'password': 'fridgeos123'
 }
 
-def generate_temperature_data(fridgename, sensorname, start_time, duration_hours=24, interval_seconds=30):
+def generate_temperature_data(sensorname, start_time, duration_hours=24, interval_seconds=30):
     """Generate realistic temperature data with some noise and trends."""
     data_points = []
     current_time = start_time
@@ -45,7 +45,6 @@ def generate_temperature_data(fridgename, sensorname, start_time, duration_hours
         
         data_points.append({
             'time': current_time,
-            'fridgename': fridgename,
             'sensorname': sensorname,
             'temperature': float(temperature)
         })
@@ -57,8 +56,8 @@ def generate_temperature_data(fridgename, sensorname, start_time, duration_hours
 def insert_data(cursor, data_points):
     """Insert data points into the database."""
     insert_query = """
-    INSERT INTO temperatures (time, fridgename, sensorname, temperature)
-    VALUES (%(time)s, %(fridgename)s, %(sensorname)s, %(temperature)s)
+    INSERT INTO temperatures (time, sensorname, temperature)
+    VALUES (%(time)s, %(sensorname)s, %(temperature)s)
     """
     
     cursor.executemany(insert_query, data_points)
@@ -75,22 +74,20 @@ def main():
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
         
-        # Define fridges and sensors
-        fridges = ['Dilution-Fridge-1', 'Dilution-Fridge-2', 'Quantum-Fridge-A']
+        # Define sensors
         sensors = ['stage1', 'stage2', 'stage3', 'magnet', 'shield']
         
         # Generate data starting from 24 hours ago
         start_time = datetime.now() - timedelta(hours=24)
         
-        print(f"Generating temperature data for {len(fridges)} fridges with {len(sensors)} sensors each...")
+        print(f"Generating temperature data for {len(sensors)} sensors...")
         
         total_points = 0
-        for fridge in fridges:
-            for sensor in sensors:
-                print(f"  Generating data for {fridge} - {sensor}")
-                data_points = generate_temperature_data(fridge, sensor, start_time)
-                insert_data(cursor, data_points)
-                total_points += len(data_points)
+        for sensor in sensors:
+            print(f"  Generating data for {sensor}")
+            data_points = generate_temperature_data(sensor, start_time)
+            insert_data(cursor, data_points)
+            total_points += len(data_points)
         
         # Commit all changes
         conn.commit()
