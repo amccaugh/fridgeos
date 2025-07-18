@@ -61,6 +61,7 @@ services:
     networks:
       - fridgeos-network
     restart: unless-stopped
+    stop_grace_period: 2s
 
   statemachine:
     build:
@@ -76,6 +77,7 @@ services:
     networks:
       - fridgeos-network
     restart: unless-stopped
+    stop_grace_period: 2s
 
   monitor:
     build:
@@ -91,6 +93,7 @@ services:
     networks:
       - fridgeos-network
     restart: unless-stopped
+    stop_grace_period: 2s
 
   database-scraper:
     build:
@@ -104,6 +107,7 @@ services:
     networks:
       - fridgeos-network
     restart: unless-stopped
+    stop_grace_period: 2s
     depends_on:
       postgres:
         condition: service_healthy
