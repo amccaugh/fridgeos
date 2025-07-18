@@ -1,3 +1,4 @@
+#%%
 import json
 import threading 
 import time
@@ -54,3 +55,9 @@ class MetricServer:
     def update_metric_values(self, metric_name, new_values_dict):
         self.server.json_dict[metric_name] = new_values_dict
         self.update_time()
+
+if __name__ == '__main__':
+    server = MetricServer()
+    server.update_metric_values('test', {'test': 1})
+    server.update_time()
+    print(server.server.json_dict)

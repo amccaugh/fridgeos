@@ -1,34 +1,33 @@
+#%%
 import time
-from fridgeos.hal.client  import HALClient
-from fridgeos.statemachine.client import StateMachineClient
+import random
 from fridgeos.logger import FridgeLogger
 from fridgeos.metricserver import MetricServer
 
 class MonitorServer(MetricServer):
     def __init__(self,
                  http_port,
-                 hal_ip,
-                 hal_port,
-                 statemachine_ip,
-                 statemachine_port,
+                 hal_client,
+                 statemachine_client,
                  min_update_period = 1,
         ):
         """ Create an HTTP server on port http_port that displays the metrics of
         the cryostat as a simple JSON. The monitor server will query the HAL
-        server every min_update_period seconds for the temperatures/heater
+        client every min_update_period seconds for the temperatures/heater
         values/state
         """
         self.logger = FridgeLogger(log_path="logs", debug=True, logger_name="Monitor").logger
         super().__init__(ip_address="0.0.0.0", port=http_port)
-        self.hal_client = HALClient(ip = hal_ip, port = hal_port)
-        self.statemachine_client = StateMachineClient(ip = statemachine_ip, port = statemachine_port)
+        self.hal_client = hal_client
+        self.statemachine_client = statemachine_client
         self.min_update_period = min_update_period # seconds
         self.logger.info(f"MonitorServer started on port {http_port}")
-        self.run()
 
     def update(self):
         # Get temperatures from HAL
+        self.logger.info('1111')
         temperatures = self.hal_client.get_temperatures()
+        self.logger.info('2222')
         self.update_metric_values(metric_name = 'temperatures',
                                    new_values_dict = temperatures)
         self.logger.debug(f'Updated temperatures: {list(temperatures.keys())}')
@@ -63,6 +62,7 @@ class MonitorServer(MetricServer):
         self.logger.info('Starting monitor server loop')
         while True:
             try:
+                self.logger.debug('Updating metrics')
                 time_start = time.time()
                 self.update()
                 while time.time() - time_start < self.min_update_period:
@@ -73,3 +73,32 @@ class MonitorServer(MetricServer):
             except Exception as e:
                 self.logger.error(f'Exception in monitor server: {e}', exc_info=True)
                 time.sleep(1)
+
+if __name__ == '__main__':
+    # Dummy HALClient
+    class DummyHALClient:
+        def get_temperatures(self):
+            return {'T1': 1.23 + random.uniform(-0.1, 0.1), 'T2': 4.56 + random.uniform(-0.1, 0.1)}
+        def get_heater_values(self):
+            return {'H1': 0.1 + random.uniform(-0.1, 0.1), 'H2': 0.2 + random.uniform(-0.1, 0.1)}
+        def get_heater_max_values(self):
+            return {'H1': 1.0, 'H2': 1.0}
+
+    # Dummy StateMachineClient
+    class DummyStateMachineClient:
+        def get_state(self):
+            if random.random() < 0.5:
+                return {'state': 'cold'}
+            else:
+                return {'state': 'warm'}
+
+    hal_client = DummyHALClient()
+    statemachine_client = DummyStateMachineClient()
+    server = MonitorServer(
+        http_port=8005,
+        hal_client=hal_client,
+        statemachine_client=statemachine_client,
+        min_update_period=2
+    )
+    server.run()
+    
