@@ -9,9 +9,10 @@ class Client():
     """
 
     """
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, timeout=1000):
         self.ip = 'tcp://'+str(ip)
         self.port = str(port)
+        self.timeout = timeout  # ms
         self.simple_init()
 
     def simple_init(self):
@@ -19,12 +20,16 @@ class Client():
         self.socket = self.context.socket(zmq.REQ)
         self.socket.connect(self.ip + ":" + self.port)
 
+        # Set socket timeouts
+        self.socket.setsockopt(zmq.RCVTIMEO, self.timeout)
+        self.socket.setsockopt(zmq.SNDTIMEO, self.timeout)
+
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
         self.connected = True
 
 
-    def send_message(self, msg, timeout=10000):
+    def send_message(self, msg, timeout=None):
         msg = msg.encode()
         msgTimeout = 'Timeout'
         # msgTimeout = msgTimeout.encode()
@@ -33,6 +38,8 @@ class Client():
             self.socket.send(msg)
         except:
             return(msgTimeout)
+        if timeout is None:
+            timeout = self.timeout
         socks = dict(self.poller.poll(timeout))
         if socks:
             if socks.get(self.socket) == zmq.POLLIN:
@@ -61,6 +68,7 @@ class Client():
 
 
     def close(self):
+        self.socket.setsockopt(zmq.LINGER, 0)
         self.socket.close()
         self.context.term()
 
