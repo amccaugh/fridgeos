@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: fridgedb
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: grafana123
+      FRIDGEOS_PASSWORD: fridgeos123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grafana -d fridgedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-app
+    environment:
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres:5432
+      - GF_DATABASE_NAME=fridgedb
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=grafana123
+      - GF_DATABASE_SSL_MODE=disable
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+
+  hal:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: hal-server
+    privileged: true
+    volumes:
+      - ./logs:/app/logs/
+      - ${SERIAL_DEVICE_PATH:-/tmp/no-serial}:/dev/serial/
+      - ../fridgeos:/app/fridgeos-src:ro
+    working_dir: /app
+    command: python scripts/hal-server.py
+    ports:
+      - "5555:5555"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+
+  statemachine:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: statemachine-server
+    volumes:
+      - ./logs:/app/logs/
+      - ../fridgeos:/app/fridgeos-src:ro
+    working_dir: /app
+    command: python scripts/statemachine-server.py
+    ports:
+      - "5556:5556"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+
+  monitor:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: monitor-server
+    volumes:
+      - ./logs:/app/logs/
+      - ../fridgeos:/app/fridgeos-src:ro
+    working_dir: /app
+    command: python scripts/monitor-server.py
+    ports:
+      - "8000:8000"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+
+  database-scraper:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: database-scraper
+    volumes:
+      - ./logs:/app/logs/
+      - ../fridgeos:/app/fridgeos-src:ro
+    working_dir: /app
+    command: python scripts/database-scraper.py
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+      monitor:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  fridgeos-network:
+    driver: bridge

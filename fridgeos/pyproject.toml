@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fridgeos"
+version = "0.2.0"
+description = "Simple, easy-to-use control software for cryostats"
+authors = [
+    { name = "Adam McCaughan", email = "adam.mccaughan@nist.gov"},
+    { name = "Ryan Morgenstern", email = "ryan.morgenstern@nist.gov"},
+]
+license = { text = "CC BY-SA" }
+dependencies = [
+    "psycopg2-binary",
+    "pandas",
+    "requests",
+    "pyserial",
+    "pyzmq",
+    "python-statemachine",
+    "simple-pid",
+]
+
+[project.urls]
+Homepage = "https://github.com/amccaugh/fridgeos"
+
+#[tool.setuptools]
+#packages = ["hal", "monitor", "scraper", "statemachine", "zmqhelper"]
+
+#[tool.setuptools.packages.find]
+#include = ["hal", "monitor", "scraper", "statemachine", "zmqhelpers"]
+#namespaces = false
