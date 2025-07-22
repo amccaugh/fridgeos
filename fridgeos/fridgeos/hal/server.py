@@ -210,28 +210,56 @@ class HALServer:
         return values
 
 
-def example_usage():
-    """Example script showing how to use the FastAPI HALServer"""
-    print("=== FastAPI HALServer Example Usage ===")
-    
-    # This would normally be called with real hardware config
-    # server = HALServer(port=8000, hardware_toml_path="hardware.toml", log_path="./logs")
-    # server.start_server()
-    
-    print("Example REST API endpoints:")
-    print("GET  /                     - Server info and available devices")
-    print("GET  /health               - Health check")
-    print("GET  /temperatures         - Get all temperatures")
-    print("GET  /temperature/{name}   - Get single temperature")
-    print("GET  /heaters/values       - Get all heater values") 
-    print("GET  /heater/{name}/value  - Get single heater value")
-    print("PUT  /heater/{name}/value  - Set heater value (JSON body: {'value': 123.4})")
-    print("GET  /heaters/max_values   - Get max values for all heaters")
-    print("\nExample curl commands:")
-    print("curl http://localhost:8000/temperatures")
-    print("curl http://localhost:8000/temperature/sensor1") 
-    print("curl -X PUT http://localhost:8000/heater/heater1/value -H 'Content-Type: application/json' -d '{\"value\": 50.0}'")
-
-
 if __name__ == '__main__':
-    example_usage()
+    import os
+    
+    # Default configuration
+    port = 8000
+    hardware_toml_path = os.path.join(os.path.dirname(__file__), "hal.toml")
+    log_path = "./hal_logs"
+    debug = True
+    
+    print("=== Starting HAL Server ===")
+    print(f"Port: {port}")
+    print(f"Hardware config: {hardware_toml_path}")
+    print(f"Log path: {log_path}")
+    print(f"Debug mode: {debug}")
+    
+    try:
+        # Check if config file exists
+        if not os.path.exists(hardware_toml_path):
+            print(f"ERROR: Hardware configuration file not found: {hardware_toml_path}")
+            sys.exit(1)
+        
+        # Create log directory if it doesn't exist
+        os.makedirs(log_path, exist_ok=True)
+        
+        # Initialize and start the server
+        server = HALServer(
+            port=port,
+            hardware_toml_path=hardware_toml_path,
+            log_path=log_path,
+            debug=debug
+        )
+        
+        print(f"\nStarting FastAPI server on http://0.0.0.0:{port}")
+        print("Available endpoints:")
+        print("GET  /                     - Server info and available devices")
+        print("GET  /health               - Health check")
+        print("GET  /temperatures         - Get all temperatures")
+        print("GET  /temperature/{name}   - Get single temperature")
+        print("GET  /heaters/values       - Get all heater values")
+        print("GET  /heater/{name}/value  - Get single heater value")
+        print("PUT  /heater/{name}/value  - Set heater value")
+        print("GET  /heaters/max_values   - Get max values for all heaters")
+        print("\nPress Ctrl+C to stop the server")
+        
+        # Start the server (this will block)
+        uvicorn.run(server.app, host="0.0.0.0", port=port, log_level="info")
+        
+    except FileNotFoundError as e:
+        print(f"ERROR: Configuration file not found - {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"ERROR: Failed to start HAL Server - {e}")
+        sys.exit(1)
