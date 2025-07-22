@@ -2,31 +2,17 @@
 import tomllib
 import os
 import time
+import threading
 import operator
+from typing import Dict, Any, Optional
 from simple_pid import PID
-import fridgeos.zmqhelper as zmqhelper
 import json
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from fridgeos.logger import FridgeLogger
-from fridgeos.metricserver import MetricServer
 
-class DummyMonitorClient:
-    def __init__(self):
-        self.metrics = {
-            'temperatures': {
-                '1K': 290,
-                '1K-main-plate': 290,
-                '4K': 290,
-                '40K': 290,
-                'pump': 290,
-                'heat_switch': 290
-            }
-        }
-    
-    def get_metrics(self):
-        return self.metrics
-    
-    def set_metric(self, name, value):
-        self.metrics[name] = value 
+class StateChangeRequest(BaseModel):
+    state: str
 
 
 class DummyHalClient:
@@ -36,42 +22,134 @@ class DummyHalClient:
     def set_heater_value(self, name, value):
         print(f'[HAL] setting heater {name} to {value}')
 
-
-
-class StateMachineServer(MetricServer):
-    def __init__(self, config_path, log_path, monitor_client, hal_client, debug=True, http_port=8001):
+class StateMachineServer:
+    def __init__(self, config_path, log_path, hal_client, debug=True, http_port=8001):
+        self.app = FastAPI(title="State Machine Server", version="1.0.0")
+        self.port = http_port
+        self.server_thread: Optional[threading.Thread] = None
+        
         self.logger = FridgeLogger(log_path=log_path, debug=debug, logger_name="StateMachine").logger
-        self.logger.info(f"Initializing Fridge with config: {config_path}")
+        self.logger.info(f"Initializing State Machine with config: {config_path}")
         
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
         self.thermometers = self._load_thermometers(config_path)
         self.states = self._load_states(config_path)
-        self.monitor_client = monitor_client
         self.hal_client = hal_client
+        
         # Set the first state as the initial state
         self.current_state = list(self.states.keys())[0]    
         self.state_entry_time = time.time()
+        self.current_temperatures = {}
+        self.running = False
+        self.state_machine_thread: Optional[threading.Thread] = None
         
-        self.logger.info(f"Fridge initialized. Initial state: {self.current_state}")
+        self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.thermometers)} thermometers, {len(self.states)} states")
-        super().__init__(ip_address="0.0.0.0", port=http_port)
-        # Initial metric
-        self.update_metric_values('state', self.current_state)
-
-
-
-    def handle_query(self, query_params):
-        # Handle query parameters like ?state=warm
-        self.logger.debug(f"Received query parameters: {query_params}")
-        if 'state' in query_params:
-            # query_params['state'] is a list, take first value
-            state = query_params['state'][0]
-            result = self.make_transition(state)
-            if result:
-                return f"State successfully changed to: {state}"
-            else:
-                return f"Invalid state: {state}. Valid states: {list(self.states.keys())}"
-        return None  # Return None to use default JSON response
+        
+        self._setup_routes()
+    
+    def _setup_routes(self):
+        @self.app.get("/")
+        async def root():
+            try:
+                return {
+                    "service": "State Machine Server",
+                    "version": "1.0.0",
+                    "current_state": self.current_state,
+                    "available_states": list(self.states.keys()),
+                    "state_entry_time": self.state_entry_time,
+                    "time_in_current_state": time.time() - self.state_entry_time,
+                    "current_temperatures": self.current_temperatures,
+                    "running": self.running
+                }
+            except Exception as e:
+                self.logger.error(f'Error getting state info: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/health")
+        async def health_check():
+            return {"status": "healthy", "timestamp": time.time()}
+        
+        @self.app.get("/state")
+        async def get_current_state():
+            return {
+                "current_state": self.current_state,
+                "state_entry_time": self.state_entry_time,
+                "time_in_current_state": time.time() - self.state_entry_time
+            }
+        
+        @self.app.put("/state")
+        async def set_state(request: StateChangeRequest):
+            try:
+                result = self.make_transition(request.state)
+                if result:
+                    return {
+                        "success": True,
+                        "message": f"State changed to {request.state}",
+                        "new_state": self.current_state,
+                        "state_entry_time": self.state_entry_time
+                    }
+                else:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Invalid state: {request.state}. Valid states: {list(self.states.keys())}"
+                    )
+            except Exception as e:
+                self.logger.error(f'Error changing state to {request.state}: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/states")
+        async def get_available_states():
+            return {
+                "available_states": list(self.states.keys()),
+                "state_configurations": self.states
+            }
+        
+        @self.app.post("/start")
+        async def start_state_machine():
+            try:
+                self.start_state_machine()
+                return {"message": "State machine started", "running": self.running}
+            except Exception as e:
+                self.logger.error(f'Error starting state machine: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.post("/stop")
+        async def stop_state_machine():
+            try:
+                self.stop_state_machine()
+                return {"message": "State machine stopped", "running": self.running}
+            except Exception as e:
+                self.logger.error(f'Error stopping state machine: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+    
+    def start_server(self):
+        """Start the FastAPI server in a separate thread"""
+        if self.server_thread is None or not self.server_thread.is_alive():
+            self.server_thread = threading.Thread(
+                target=lambda: uvicorn.run(
+                    self.app, 
+                    host="0.0.0.0", 
+                    port=self.port, 
+                    log_level="info"
+                )
+            )
+            self.server_thread.daemon = True
+            self.server_thread.start()
+            print(f'State Machine Server started on port {self.port}')
+    
+    def start_state_machine(self):
+        """Start the state machine loop in a separate thread"""
+        if not self.running:
+            self.running = True
+            self.state_machine_thread = threading.Thread(target=self.run, daemon=True)
+            self.state_machine_thread.start()
+            self.logger.info('State machine started')
+    
+    def stop_state_machine(self):
+        """Stop the state machine loop"""
+        self.running = False
+        self.logger.info('State machine stopped')
 
     def _parse_criterion(self, crit, constants=None):
         """
@@ -98,7 +176,6 @@ class StateMachineServer(MetricServer):
             return {'sensor': sensor, 'op': op_func, 'value': value}
         else:
             raise ValueError(f"Invalid criterion format: {crit}")
-
 
     def _load_transitions(self, config_path):
         """
@@ -199,22 +276,22 @@ class StateMachineServer(MetricServer):
         
         self.logger.info(f"Loaded {len(parsed_states)} states")
         return parsed_states
-
         
     def update_heater_setpoints(self, new_state):
         self.logger.info(f"Updating heater setpoints for state: {new_state}")
         thermometer_config = self.states[new_state]
         for thermometer, value in thermometer_config.items():
-            self.logger.debug(f'Setting {thermometer} setpoint to {value}')
-            heater_name = self.thermometers[thermometer]['corresponding_heater']
-            pid_controller = self.thermometers[thermometer]['pid_controller']
-            pid_controller.setpoint = value
-            self.logger.debug(f'PID setpoint for {thermometer} -> {heater_name} set to {value}')
+            if thermometer in self.thermometers:
+                self.logger.debug(f'Setting {thermometer} setpoint to {value}')
+                heater_name = self.thermometers[thermometer]['corresponding_heater']
+                pid_controller = self.thermometers[thermometer]['pid_controller']
+                pid_controller.setpoint = value
+                self.logger.debug(f'PID setpoint for {thermometer} -> {heater_name} set to {value}')
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
-        current_temperatures = self.monitor_client.get_metrics()['temperatures']
-        if "sensor" not in criterion:
+        current_temperatures = self.hal_client.get_temperatures()
+        if criterion['sensor'] not in current_temperatures:
             self.logger.error(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
             return False
         result = criterion['op'](
@@ -257,14 +334,13 @@ class StateMachineServer(MetricServer):
         self.current_state = new_state
         self.state_entry_time = time.time()
         self.update_heater_setpoints(new_state)
-        self.update_metric_values('state', self.current_state)
         return True
 
     def update_heaters(self):
-        # Get temperatures from MonitorClient
-        self.current_temperatures = self.monitor_client.get_metrics()['temperatures']
+        # Get temperatures from HAL Client
+        self.current_temperatures = self.hal_client.get_temperatures()
         self.logger.debug(f"Current temperatures: {self.current_temperatures}")
-        # For each thermometer listed in the monitor
+        # For each thermometer listed in the HAL
         for thermometer_name, T in self.current_temperatures.items():
             # If the thermometer is listed in the thermometers section of the config,
             # set the corresponding heater to the value
@@ -276,29 +352,47 @@ class StateMachineServer(MetricServer):
                     self.logger.debug(f'Setting heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
                     self.hal_client.set_heater_value(heater_name, new_value)
 
-
-
     def run(self):
         self.logger.info('Starting state machine loop')
-        while True:
+        while self.running:
             try:
                 self.update_heaters()
                 self.attempt_transition()
-                # Always update the state metric
-                self.update_metric_values('state', self.current_state)
                 time.sleep(1)
             except Exception as e:
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
                 time.sleep(1)
+        self.logger.info('State machine loop ended')
+
+
+def example_usage():
+    """Example script showing how to use the FastAPI StateMachineServer"""
+    print("=== FastAPI StateMachineServer Example Usage ===")
+    
+    print("Example REST API endpoints:")
+    print("GET  /                     - Server info and current state")
+    print("GET  /health               - Health check")
+    print("GET  /state                - Get current state info")
+    print("PUT  /state                - Change state (JSON body: {'state': 'warm'})")
+    print("GET  /states               - Get available states")
+    print("POST /start                - Start state machine loop")
+    print("POST /stop                 - Stop state machine loop")
+    print("\nExample curl commands:")
+    print("curl http://localhost:8001/")
+    print("curl http://localhost:8001/state")
+    print("curl -X PUT http://localhost:8001/state -H 'Content-Type: application/json' -d '{\"state\": \"warm\"}'")
+    print("curl -X POST http://localhost:8001/start")
 
 
 if __name__ == '__main__':
     server = StateMachineServer(
         config_path = './config/statemachine.toml',
         log_path='./logs/',
-        monitor_client=DummyMonitorClient(),
         hal_client=DummyHalClient(),
         debug = True,
-        http_port=8001,  # Explicitly set, but matches default
+        http_port=8001,
     )
-    server.run()
+    
+    # Start the FastAPI server
+    print(f"Starting FastAPI server on http://0.0.0.0:{server.port}")
+    uvicorn.run(server.app, host="0.0.0.0", port=server.port, log_level="info")
