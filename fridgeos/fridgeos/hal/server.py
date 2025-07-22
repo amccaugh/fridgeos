@@ -5,8 +5,13 @@ import time
 import numpy as np
 import logging
 import sys
-import fridgeos.zmqhelper as zmqhelper
 import os
+import threading
+from typing import Dict, Any, Optional
+from fastapi import FastAPI, HTTPException, Path
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import uvicorn
 
 # Device driver imports
 from .drivers.haldrivers import hal_classes
@@ -15,17 +20,114 @@ from fridgeos.logger import FridgeLogger
 # TODO: Make 1 worker per communication address (e.g. 1 for COM5, 1 for COM6, 1 for /dev/usb321)
 # TODO: Add configuration-file checking (e.g. for max_heater_value) and error reporting
 
-class HALServer(zmqhelper.Server):
+class HeaterValueRequest(BaseModel):
+    value: float
 
-    def __init__(self, port, hardware_toml_path, log_path, debug = False, n_workers = 1):
+class HALServer:
+    def __init__(self, port: int, hardware_toml_path: str, log_path: str, debug: bool = False):
+        self.app = FastAPI(title="HAL Server", version="1.0.0")
+        self.port = port
         self.hardware = {}
         self.hardware['thermometers'] = {}
         self.hardware['heaters'] = {}
-        self.logger = FridgeLogger(log_path, logger_name='HAL', debug = debug).logger
+        self.logger = FridgeLogger(log_path, logger_name='HAL', debug=debug).logger
+        self.server_thread: Optional[threading.Thread] = None
+        
         self.load_hardware(hardware_toml_path)
         self.logger.info(f"HAL Server initialized with {len(self.hardware['thermometers'])} thermometers and {len(self.hardware['heaters'])} heaters")
-        super().__init__(port, n_workers)
-        print('HAL Server started')
+        
+        self._setup_routes()
+        print('HAL Server initialized')
+    
+    def _setup_routes(self):
+        @self.app.get("/")
+        async def root():
+            return {
+                "service": "HAL Server",
+                "version": "1.0.0",
+                "thermometers": list(self.hardware['thermometers'].keys()),
+                "heaters": list(self.hardware['heaters'].keys())
+            }
+        
+        @self.app.get("/health")
+        async def health_check():
+            return {"status": "healthy", "timestamp": time.time()}
+        
+        @self.app.get("/temperatures")
+        async def get_all_temperatures():
+            try:
+                return self.get_temperatures()
+            except Exception as e:
+                self.logger.error(f'Error getting all temperatures: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/temperature/{name}")
+        async def get_single_temperature(name: str = Path(..., description="Thermometer name")):
+            try:
+                return self.get_temperature(name)
+            except ValueError as e:
+                self.logger.error(f'Error getting temperature for {name}: {e}')
+                raise HTTPException(status_code=404, detail=str(e))
+            except Exception as e:
+                self.logger.error(f'Error getting temperature for {name}: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/heaters/values")
+        async def get_all_heater_values():
+            try:
+                return self.get_heater_values()
+            except Exception as e:
+                self.logger.error(f'Error getting all heater values: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/heater/{name}/value")
+        async def get_single_heater_value(name: str = Path(..., description="Heater name")):
+            try:
+                return self.get_heater_value(name)
+            except ValueError as e:
+                self.logger.error(f'Error getting heater value for {name}: {e}')
+                raise HTTPException(status_code=404, detail=str(e))
+            except Exception as e:
+                self.logger.error(f'Error getting heater value for {name}: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.put("/heater/{name}/value")
+        async def set_single_heater_value(
+            name: str = Path(..., description="Heater name"),
+            request: HeaterValueRequest = ...
+        ):
+            try:
+                self.logger.debug(f"Setting heater {name} to {request.value}")
+                return self.set_heater_value(name, request.value)
+            except ValueError as e:
+                self.logger.error(f'Error setting heater value for {name}: {e}')
+                raise HTTPException(status_code=404, detail=str(e))
+            except Exception as e:
+                self.logger.error(f'Error setting heater value for {name}: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/heaters/max_values")
+        async def get_heater_max_values():
+            try:
+                return self.get_heater_max_values()
+            except Exception as e:
+                self.logger.error(f'Error getting heater max values: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+    
+    def start_server(self):
+        """Start the FastAPI server in a separate thread"""
+        if self.server_thread is None or not self.server_thread.is_alive():
+            self.server_thread = threading.Thread(
+                target=lambda: uvicorn.run(
+                    self.app, 
+                    host="0.0.0.0", 
+                    port=self.port, 
+                    log_level="info"
+                )
+            )
+            self.server_thread.daemon = True
+            self.server_thread.start()
+            print(f'HAL Server started on port {self.port}')
     
     def get_hardware(self, name, hardware_type):
         """ Checks that a device with the given name exists
@@ -35,40 +137,6 @@ class HALServer(zmqhelper.Server):
             raise ValueError(f'Device name "{name}" not found for hardware type {hardware_type}')
         else:
             return self.hardware[hardware_type][name]['python_object']
-
-    def handle(self, message):
-        message_dict = json.loads(message)
-        command = message_dict['cmd'].lower()
-        self.logger.debug(f"Received command: {command}")
-        
-        try:
-            if command == 'get_temperature':
-                name = message_dict['name']
-                output = self.get_temperature(name)
-            elif command == 'get_temperatures':
-                output = self.get_temperatures()
-            elif command == 'set_heater_value':
-                self.logger.debug(f"Setting heater {message_dict['name']} to {message_dict['value']}")
-                name = message_dict['name']
-                value = message_dict['value']
-                output = self.set_heater_value(name, value)
-            elif command == 'get_heater_value':
-                name = message_dict['name']
-                output = self.get_heater_value(name)
-            elif command == 'get_heater_values':
-                output = self.get_heater_values()
-            elif command == 'get_heater_max_values':
-                output = self.get_heater_max_values()
-            else:
-                self.logger.error(f'Unrecognized command "{command}"')
-        # Catch errors, log them, and return an empty dictionary
-        except Exception as e:
-            self.logger.error(f'Error handling command "{command}": {e}')
-            output = {}
-
-        message_out = json.dumps(output)
-        self.logger.debug(f"Sending response: '{message_out}'")
-        return message_out               
 
     def load_hardware(self, hardware_toml_path):
         self.logger.info(f"Loading hardware configuration from: {hardware_toml_path}")
@@ -108,18 +176,18 @@ class HALServer(zmqhelper.Server):
 
     def get_temperature(self, name):
         """ Get the temperature of a single thermometer """
-        hw = self.get_hardware(name = name, hardware_type = 'thermometers')
-        return {name : hw.get_temperature()}
+        hw = self.get_hardware(name=name, hardware_type='thermometers')
+        return {name: hw.get_temperature()}
     
     def get_heater_value(self, name):
         """ Get the value of a single heater """
-        hw = self.get_hardware(name = name, hardware_type = 'heaters')
-        return {name : hw.get_heater_value()}
+        hw = self.get_hardware(name=name, hardware_type='heaters')
+        return {name: hw.get_heater_value()}
     
     def set_heater_value(self, name, value):
         """ Set the value of a single heater """
-        hw = self.get_hardware(name = name, hardware_type = 'heaters')
-        return {name : hw.set_heater_value(value)}
+        hw = self.get_hardware(name=name, hardware_type='heaters')
+        return {name: hw.set_heater_value(value)}
 
     def get_temperatures(self):
         temperatures = {}
@@ -140,18 +208,30 @@ class HALServer(zmqhelper.Server):
         for name in self.hardware['heaters'].keys():
             values[name] = self.hardware['heaters'][name]['max_value']
         return values
+
+
+def example_usage():
+    """Example script showing how to use the FastAPI HALServer"""
+    print("=== FastAPI HALServer Example Usage ===")
     
+    # This would normally be called with real hardware config
+    # server = HALServer(port=8000, hardware_toml_path="hardware.toml", log_path="./logs")
+    # server.start_server()
+    
+    print("Example REST API endpoints:")
+    print("GET  /                     - Server info and available devices")
+    print("GET  /health               - Health check")
+    print("GET  /temperatures         - Get all temperatures")
+    print("GET  /temperature/{name}   - Get single temperature")
+    print("GET  /heaters/values       - Get all heater values") 
+    print("GET  /heater/{name}/value  - Get single heater value")
+    print("PUT  /heater/{name}/value  - Set heater value (JSON body: {'value': 123.4})")
+    print("GET  /heaters/max_values   - Get max values for all heaters")
+    print("\nExample curl commands:")
+    print("curl http://localhost:8000/temperatures")
+    print("curl http://localhost:8000/temperature/sensor1") 
+    print("curl -X PUT http://localhost:8000/heater/heater1/value -H 'Content-Type: application/json' -d '{\"value\": 50.0}'")
 
-    # def find_unique_addresses(self,toml_file_path):
-    #     # Load the TOML file
-    #     data = tomllib.load(toml_file_path)
-    #     # Initialize a set to store unique addresses
-    #     unique_addresses = set()
-    #     # Look for "address" keys in all thermometer, heater, and relay sections
-    #     for section_name in list(data.keys()):
-    #         if section_name in data:
-    #             for item in data[section_name]:
-    #                 if "address" in item:
-    #                     unique_addresses.add(item["address"])
-    #     return unique_addresses
 
+if __name__ == '__main__':
+    example_usage()
