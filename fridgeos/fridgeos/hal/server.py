@@ -42,12 +42,22 @@ class HALServer:
     def _setup_routes(self):
         @self.app.get("/")
         async def root():
-            return {
-                "service": "HAL Server",
-                "version": "1.0.0",
-                "thermometers": list(self.hardware['thermometers'].keys()),
-                "heaters": list(self.hardware['heaters'].keys())
-            }
+            try:
+                return {
+                    "service": "HAL Server",
+                    "version": "1.0.0",
+                    "temperatures": self.get_temperatures(),
+                    "heater_values": self.get_heater_values(),
+                    "heater_max_values": self.get_heater_max_values()
+                }
+            except Exception as e:
+                self.logger.error(f'Error getting device values for root endpoint: {e}')
+                # Return basic info if device reads fail
+                return {
+                    "service": "HAL Server",
+                    "version": "1.0.0",
+                    "error": f"Could not read device values: {str(e)}"
+                }
         
         @self.app.get("/health")
         async def health_check():
