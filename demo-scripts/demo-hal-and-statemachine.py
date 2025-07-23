@@ -75,10 +75,15 @@ def main():
         http_port=statemachine_port
     )
     
-    # Start StateMachine Server in a separate thread
-    print("Starting StateMachine Server...")
-    sm_thread = threading.Thread(target=statemachine_server.run, daemon=True)
+    # Start StateMachine Server HTTP API in a separate thread
+    print("Starting StateMachine Server HTTP API...")
+    def run_statemachine_server():
+        uvicorn.run(statemachine_server.app, host="0.0.0.0", port=statemachine_port, log_level="error")
+    
+    sm_thread = threading.Thread(target=run_statemachine_server, daemon=True)
     sm_thread.start()
+    
+    # Note: State machine loop starts automatically when StateMachineServer is initialized
     
     # Give StateMachine server time to start up
     time.sleep(2)

@@ -14,6 +14,16 @@ name = "1K-main-plate"
 hardware = "DummyThermometer"
 setup.address = "COM123"
 
+[[thermometers]]
+name = "heat_switch"
+hardware = "DummyThermometer" 
+setup.address = "COM123"
+
+[[thermometers]]
+name = "pump"
+hardware = "DummyThermometer"
+setup.address = "COM123"
+
 [[heaters]]
 name = "PUMPHEATER"
 hardware = "DummyHeater"
