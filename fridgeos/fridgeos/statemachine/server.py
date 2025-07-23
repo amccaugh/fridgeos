@@ -23,6 +23,9 @@ class DummyHalClient:
     def set_heater_value(self, name, value):
         print(f'[HAL] setting heater {name} to {value}')
 
+    def get_temperatures(self):
+        return {'pump': 1.23, '4K': 4.56, '1K': 1.1, '1K-main-plate': 1.05}
+
 class StateMachineServer:
     def __init__(self, config_path, log_path, hal_client, debug=True, http_port=8001):
         self.app = FastAPI(title="State Machine Server", version="1.0.0")
@@ -331,8 +334,8 @@ class StateMachineServer:
         self.logger.info('Starting state machine loop')
         while True:
             try:
-                self.update_heaters()
                 self.attempt_transition()
+                self.update_heaters()
                 time.sleep(1)
             except Exception as e:
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
