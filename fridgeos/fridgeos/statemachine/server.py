@@ -10,6 +10,7 @@ import json
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fridgeos.logger import FridgeLogger
+import uvicorn
 
 class StateChangeRequest(BaseModel):
     state: str
@@ -40,13 +41,19 @@ class StateMachineServer:
         self.current_state = list(self.states.keys())[0]    
         self.state_entry_time = time.time()
         self.current_temperatures = {}
-        self.running = False
         self.state_machine_thread: Optional[threading.Thread] = None
         
         self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.thermometers)} thermometers, {len(self.states)} states")
         
         self._setup_routes()
+        self._start_state_machine_loop()
+    
+    def _start_state_machine_loop(self):
+        if self.state_machine_thread is None or not self.state_machine_thread.is_alive():
+            self.state_machine_thread = threading.Thread(target=self.run, daemon=True)
+            self.state_machine_thread.start()
+            self.logger.info('State machine started automatically')
     
     def _setup_routes(self):
         @self.app.get("/")
@@ -59,8 +66,7 @@ class StateMachineServer:
                     "available_states": list(self.states.keys()),
                     "state_entry_time": self.state_entry_time,
                     "time_in_current_state": time.time() - self.state_entry_time,
-                    "current_temperatures": self.current_temperatures,
-                    "running": self.running
+                    "current_temperatures": self.current_temperatures
                 }
             except Exception as e:
                 self.logger.error(f'Error getting state info: {e}')
@@ -104,24 +110,6 @@ class StateMachineServer:
                 "available_states": list(self.states.keys()),
                 "state_configurations": self.states
             }
-        
-        @self.app.post("/start")
-        async def start_state_machine():
-            try:
-                self.start_state_machine()
-                return {"message": "State machine started", "running": self.running}
-            except Exception as e:
-                self.logger.error(f'Error starting state machine: {e}')
-                raise HTTPException(status_code=500, detail=str(e))
-        
-        @self.app.post("/stop")
-        async def stop_state_machine():
-            try:
-                self.stop_state_machine()
-                return {"message": "State machine stopped", "running": self.running}
-            except Exception as e:
-                self.logger.error(f'Error stopping state machine: {e}')
-                raise HTTPException(status_code=500, detail=str(e))
     
     def start_server(self):
         """Start the FastAPI server in a separate thread"""
@@ -138,19 +126,6 @@ class StateMachineServer:
             self.server_thread.start()
             print(f'State Machine Server started on port {self.port}')
     
-    def start_state_machine(self):
-        """Start the state machine loop in a separate thread"""
-        if not self.running:
-            self.running = True
-            self.state_machine_thread = threading.Thread(target=self.run, daemon=True)
-            self.state_machine_thread.start()
-            self.logger.info('State machine started')
-    
-    def stop_state_machine(self):
-        """Stop the state machine loop"""
-        self.running = False
-        self.logger.info('State machine stopped')
-
     def _parse_criterion(self, crit, constants=None):
         """
         Parse a single criterion string into a dict with sensor, operator function, and value.
@@ -354,7 +329,7 @@ class StateMachineServer:
 
     def run(self):
         self.logger.info('Starting state machine loop')
-        while self.running:
+        while True:
             try:
                 self.update_heaters()
                 self.attempt_transition()
@@ -375,13 +350,10 @@ def example_usage():
     print("GET  /state                - Get current state info")
     print("PUT  /state                - Change state (JSON body: {'state': 'warm'})")
     print("GET  /states               - Get available states")
-    print("POST /start                - Start state machine loop")
-    print("POST /stop                 - Stop state machine loop")
     print("\nExample curl commands:")
     print("curl http://localhost:8001/")
     print("curl http://localhost:8001/state")
     print("curl -X PUT http://localhost:8001/state -H 'Content-Type: application/json' -d '{\"state\": \"warm\"}'")
-    print("curl -X POST http://localhost:8001/start")
 
 
 if __name__ == '__main__':
