@@ -68,7 +68,7 @@ class StateMachineServer:
                     "current_state": self.current_state,
                     "available_states": list(self.states.keys()),
                     "state_entry_time": self.state_entry_time,
-                    "time_in_current_state": time.time() - self.state_entry_time,
+                    "time_in_current_state": round(time.time() - self.state_entry_time, 1),
                     "current_temperatures": self.current_temperatures
                 }
             except Exception as e:
@@ -84,7 +84,7 @@ class StateMachineServer:
             return {
                 "current_state": self.current_state,
                 "state_entry_time": self.state_entry_time,
-                "time_in_current_state": time.time() - self.state_entry_time
+                "time_in_current_state": round(time.time() - self.state_entry_time, 1)
             }
         
         @self.app.put("/state")
@@ -96,7 +96,7 @@ class StateMachineServer:
                         "success": True,
                         "message": f"State changed to {request.state}",
                         "new_state": self.current_state,
-                        "state_entry_time": self.state_entry_time
+                        "state_entry_time": round(self.state_entry_time, 1)
                     }
                 else:
                     raise HTTPException(
@@ -107,7 +107,7 @@ class StateMachineServer:
                 self.logger.error(f'Error changing state to {request.state}: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
         
-        @self.app.get("/states")
+        @self.app.get("/statelist")
         async def get_available_states():
             return {
                 "available_states": list(self.states.keys()),
