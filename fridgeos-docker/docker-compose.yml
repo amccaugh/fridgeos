@@ -58,7 +58,7 @@ services:
     working_dir: /app
     command: python scripts/hal-server.py
     ports:
-      - "5555:5555"
+      - "8000:8000"
     networks:
       - fridgeos-network
     restart: unless-stopped
@@ -75,7 +75,7 @@ services:
     working_dir: /app
     command: python scripts/statemachine-server.py
     ports:
-      - "5556:5556"
+      - "8001:8001"
     networks:
       - fridgeos-network
     restart: unless-stopped

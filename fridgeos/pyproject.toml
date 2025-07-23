@@ -19,6 +19,8 @@ dependencies = [
     "pyzmq",
     "python-statemachine",
     "simple-pid",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.urls]

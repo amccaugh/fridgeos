@@ -1,14 +1,17 @@
+import uvicorn
 from fridgeos.statemachine.server import StateMachineServer
 from fridgeos.hal.client import HALClient
-from fridgeos.monitor.client import MonitorClient
 
-halclient = HALClient(ip = '127.0.0.1', port = 8000)
+halclient = HALClient(ip='hal', port=8000)
 
 print('Attempting to start State Machine server')
 server = StateMachineServer(
-    config_path = './config/statemachine.toml',
+    config_path='./config/statemachine.toml',
     log_path='./logs/',
     hal_client=halclient,
-    debug = True,
-    http_port=8001,  # Explicitly set, but matches default
+    debug=True,
+    http_port=8001
 )
+
+print('Starting StateMachine server on port 8001...')
+uvicorn.run(server.app, host="0.0.0.0", port=8001, log_level="info")
