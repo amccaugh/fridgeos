@@ -21,7 +21,7 @@ setup.address = "COM123"
 
 [[thermometers]]
 name = "heat_switch"
-hardware = "DummyThermometer"
+hardware = "FaultyDummyThermometer"
 setup.address = "COM123"
 
 [[heaters]]
