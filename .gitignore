@@ -7,6 +7,7 @@ docs/_build
 *secrets.toml
 
 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -70,6 +71,7 @@ coverage.xml
 
 # Django stuff:
 *.log
+*.log.*
 
 # Sphinx documentation
 docs/_build/
