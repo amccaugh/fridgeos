@@ -369,6 +369,9 @@ class StateMachineServer:
         for thermometer_name, T in self.current_temperatures.items():
             # If the thermometer is listed in the thermometers section of the config,
             # set the corresponding heater to the value
+            if T is None:
+                self.logger.error(f'No temperature reading received for {thermometer_name}')
+                continue
             if thermometer_name in self.thermometers:
                 heater_name = self.thermometers[thermometer_name].get('corresponding_heater')
                 if heater_name:
