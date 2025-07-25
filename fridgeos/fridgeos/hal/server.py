@@ -74,7 +74,12 @@ class HALServer:
         @self.app.get("/temperature/{name}")
         async def get_single_temperature(name: str = Path(..., description="Thermometer name")):
             try:
-                return self.get_temperature(name)
+                result = self.get_temperature(name)
+                temp = result.get(name)
+                if temp is None:
+                    self.logger.error(f'Unprocessable thermometer reading for {name}')
+                    raise HTTPException(status_code=422, detail=f"Unprocessable thermometer reading for {name}")
+                return result
             except ValueError as e:
                 self.logger.error(f'Error getting temperature for {name}: {e}')
                 raise HTTPException(status_code=404, detail=str(e))
@@ -185,10 +190,15 @@ class HALServer:
                 self.logger.debug(f"Loaded {hardware_type}: {name}")
 
     def get_temperature(self, name):
-        """ Get the temperature of a single thermometer """
+        """ Get the temperature of a single thermometer, with error handling for faulty readings """
         self.logger.debug(f"Getting temperature for {name}")
         hw = self.get_hardware(name=name, hardware_type='thermometers')
-        return {name: hw.get_temperature()}
+        try:
+            temp = hw.get_temperature()
+        except Exception as e:
+            self.logger.error(f"Error reading temperature from {name}: {e}")
+            temp = None  # or float('nan') if you prefer NaN
+        return {name: temp}
     
     def get_heater_value(self, name):
         """ Get the value of a single heater """
@@ -206,7 +216,8 @@ class HALServer:
         self.logger.debug(f"Getting temperatures for {self.hardware['thermometers'].keys()}")
         temperatures = {}
         for name in self.hardware['thermometers'].keys():
-            temperatures.update(self.get_temperature(name))
+            result = self.get_temperature(name)
+            temperatures.update(result)
         return temperatures
     
     def get_heater_values(self):
