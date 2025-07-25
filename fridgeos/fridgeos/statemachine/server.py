@@ -316,6 +316,9 @@ class StateMachineServer:
         if criterion['sensor'] not in current_temperatures:
             self.logger.error(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
             return False
+        if current_temperatures[criterion['sensor']] is None:
+            self.logger.error(f'Sensor {criterion["sensor"]} returned None value')
+            return False
         result = criterion['op'](
             current_temperatures[criterion['sensor']],
             criterion['value'])
