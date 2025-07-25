@@ -1,6 +1,9 @@
+[settings]
+# How often to read temperatures from the HAL
+polling_interval = 1.0
+
 [constants]
 T_switch_high = 20
-
 
 
 [thermometers.pump]

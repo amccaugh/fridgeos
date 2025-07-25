@@ -1,6 +1,7 @@
 #%%
 import tomllib
 import os
+from datetime import datetime
 import time
 import threading
 import operator
@@ -27,7 +28,7 @@ class DummyHalClient:
         return {'pump': 1.23, '4K': 4.56, '1K': 1.1, '1K-main-plate': 1.05}
 
 class StateMachineServer:
-    def __init__(self, config_path, log_path, hal_client, debug=True, http_port=8001):
+    def __init__(self, config_path, log_path, hal_client, polling_interval = 1, debug=True, http_port=8001):
         self.app = FastAPI(title="State Machine Server", version="1.0.0")
         self.port = http_port
         self.server_thread: Optional[threading.Thread] = None
@@ -35,15 +36,24 @@ class StateMachineServer:
         self.logger = FridgeLogger(log_path=log_path, debug=debug, logger_name="StateMachine").logger
         self.logger.info(f"Initializing State Machine with config: {config_path}")
         
+        # Load constants and settings
+        self.constants = self._load_constants(config_path)
+        self.settings = self._load_settings(config_path)
+        
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
         self.thermometers = self._load_thermometers(config_path)
         self.states = self._load_states(config_path)
+        
+        # Use polling_interval from [settings] section if available, otherwise use parameter default
+        self.polling_interval = self.settings.get('polling_interval', polling_interval)
         self.hal_client = hal_client
         
         # Set the first state as the initial state
         self.current_state = list(self.states.keys())[0]    
         self.state_entry_time = time.time()
         self.current_temperatures = {}
+        self.last_update_time = time.time()
+        self.last_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.state_machine_thread: Optional[threading.Thread] = None
         
         self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
@@ -51,6 +61,26 @@ class StateMachineServer:
         
         self._setup_routes()
         self._start_state_machine_loop()
+    
+    def _load_constants(self, config_path):
+        """Load constants from the [constants] section of the TOML file."""
+        self.logger.debug(f"Loading constants from {config_path}")
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+        
+        constants = config.get('constants', {})
+        self.logger.debug(f"Loaded constants: {constants}")
+        return constants
+    
+    def _load_settings(self, config_path):
+        """Load settings from the [settings] section of the TOML file."""
+        self.logger.debug(f"Loading settings from {config_path}")
+        with open(config_path, "rb") as f:
+            config = tomllib.load(f)
+        
+        settings = config.get('settings', {})
+        self.logger.debug(f"Loaded settings: {settings}")
+        return settings
     
     def _start_state_machine_loop(self):
         if self.state_machine_thread is None or not self.state_machine_thread.is_alive():
@@ -63,13 +93,15 @@ class StateMachineServer:
         async def root():
             try:
                 return {
-                    "service": "State Machine Server",
+                    "service": "FridgeOS State Machine Server",
                     "version": "1.0.0",
                     "current_state": self.current_state,
                     "available_states": list(self.states.keys()),
                     "state_entry_time": self.state_entry_time,
                     "time_in_current_state": round(time.time() - self.state_entry_time, 1),
-                    "current_temperatures": self.current_temperatures
+                    "current_temperatures": self.current_temperatures,
+                    "last_update_time": self.last_update_time,
+                    "last_update_datetime": self.last_update_datetime
                 }
             except Exception as e:
                 self.logger.error(f'Error getting state info: {e}')
@@ -163,9 +195,8 @@ class StateMachineServer:
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
         
-        # Get constants from the [constants] section
-        constants = config.get('constants', {})
-        self.logger.debug(f"Loaded constants: {constants}")
+        # Use already loaded constants
+        constants = self.constants
         
         transitions = config.get('transitions', [])
         parsed = []
@@ -233,8 +264,8 @@ class StateMachineServer:
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
         
-        # Get constants for resolving values
-        constants = config.get('constants', {})
+        # Use already loaded constants for resolving values
+        constants = self.constants
         
         states = config.get('states', {})
         parsed_states = {}
@@ -269,6 +300,8 @@ class StateMachineServer:
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
         current_temperatures = self.hal_client.get_temperatures()
+        self.last_update_time = time.time()
+        self.last_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if criterion['sensor'] not in current_temperatures:
             self.logger.error(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
             return False
@@ -336,11 +369,9 @@ class StateMachineServer:
             try:
                 self.attempt_transition()
                 self.update_heaters()
-                time.sleep(1)
             except Exception as e:
                 self.logger.error(f'Exception in state machine loop: {e}', exc_info=True)
-                time.sleep(1)
-        self.logger.info('State machine loop ended')
+            time.sleep(self.polling_interval)
 
 
 def example_usage():
