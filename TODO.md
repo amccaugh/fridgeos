@@ -1,5 +1,6 @@
 - What if HAL errors out occasionally?  Make DummyThermometer error out 1/10 times
 - Add Grafana "value mapping" for state
+- Let StateMachineServer handle None values from temperature sensors
 - Settings.toml:
     - Set statemachine polling interval (temperature_polling_interval)
     - Set scraping interval
