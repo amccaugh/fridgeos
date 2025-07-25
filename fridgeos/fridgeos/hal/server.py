@@ -24,7 +24,7 @@ class HeaterValueRequest(BaseModel):
     value: float
 
 class HALServer:
-    def __init__(self, port: int, hardware_toml_path: str, log_path: str, debug: bool = False):
+    def __init__(self, port: int, hardware_toml_path: str, log_path: str, debug: bool = True):
         self.app = FastAPI(title="HAL Server", version="1.0.0")
         self.port = port
         self.hardware = {}
@@ -186,20 +186,24 @@ class HALServer:
 
     def get_temperature(self, name):
         """ Get the temperature of a single thermometer """
+        self.logger.debug(f"Getting temperature for {name}")
         hw = self.get_hardware(name=name, hardware_type='thermometers')
         return {name: hw.get_temperature()}
     
     def get_heater_value(self, name):
         """ Get the value of a single heater """
+        self.logger.debug(f"Getting heater value for {name}")
         hw = self.get_hardware(name=name, hardware_type='heaters')
         return {name: hw.get_heater_value()}
     
     def set_heater_value(self, name, value):
         """ Set the value of a single heater """
+        self.logger.debug(f"Setting heater {name} to {value}")
         hw = self.get_hardware(name=name, hardware_type='heaters')
         return {name: hw.set_heater_value(value)}
 
     def get_temperatures(self):
+        self.logger.debug(f"Getting temperatures for {self.hardware['thermometers'].keys()}")
         temperatures = {}
         for name in self.hardware['thermometers'].keys():
             temperatures.update(self.get_temperature(name))
@@ -208,12 +212,14 @@ class HALServer:
     def get_heater_values(self):
         """ Get the values of all heaters, returns a dictionary of the
         form {name1 : value1, name2 : value2, ...} """
+        self.logger.debug(f"Getting heater values for {self.hardware['heaters'].keys()}")
         values = {}
         for name in self.hardware['heaters'].keys():
             values.update(self.get_heater_value(name))
         return values
     
     def get_heater_max_values(self):
+        self.logger.debug(f"Getting heater max values for {self.hardware['heaters'].keys()}")
         values = {}
         for name in self.hardware['heaters'].keys():
             values[name] = self.hardware['heaters'][name]['max_value']
