@@ -145,6 +145,17 @@ class StateMachineServer:
                 "available_states": list(self.states.keys()),
                 "state_configurations": self.states
             }
+
+        @self.app.get("/temperatures")
+        async def get_temperatures():
+            """
+            Returns the current temperature readings as reported by the state machine.
+            """
+            try:
+                return self.current_temperatures
+            except Exception as e:
+                self.logger.error(f'Error getting temperatures: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
     
     def start_server(self):
         """Start the FastAPI server in a separate thread"""

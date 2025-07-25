@@ -1,4 +1,8 @@
-- See what happens if the HAL gets spammed (what if DummyHALClient takes like 1.5 seconds to respond)?
+- What if HAL errors out occasionally?  Make DummyThermometer error out 1/10 times
+- Add Grafana "value mapping" for state
+- Settings.toml:
+    - Set statemachine polling interval (temperature_polling_interval)
+    - Set scraping interval
+    - debug to be set to true/false
 - Have StateMachineServer version point to the correct fridgeos version
-- Have scraper not upload if last_update_time is > 60 sec
 - Create a new "heaters" databse table, make the database-scraper upload it to that table, and create a grafana panel called "Heater values" underneath the existing panels with a time series visualization

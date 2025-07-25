@@ -30,6 +30,12 @@ class StateMachineClient:
             raise RuntimeError(f"Failed to set state: {error_detail}") from e
         return None
 
+    def get_temperatures(self):
+        """Get all temperature readings from the server."""
+        resp = requests.get(f"{self.base_url}/temperatures")
+        resp.raise_for_status()
+        return resp.json()
+
 
 if __name__ == "__main__":
     state_machine_client = StateMachineClient(base_url = 'http://localhost:8001')

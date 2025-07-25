@@ -1,25 +1,29 @@
 #%%
-from fridgeos import HALClient
 import psycopg2
 from datetime import datetime, timezone
 import time
+from fridgeos.statemachine.client import StateMachineClient
 
-hal_client = HALClient(ip='hal', port=8000)
+
+state_machine_client = StateMachineClient(base_url='http://statemachine:8001')
 
 def get_temperature_data():
-    """Get temperature data from HAL client"""
+    """Get temperature data from StateMachine client"""
     try:
-        temperatures = hal_client.get_temperatures()
+        temperatures = state_machine_client.get_temperatures()
         return temperatures
     except Exception as e:
         print(f"Error getting temperature data: {e}")
         return {}
 
 def get_state_data():
-    """Get state data - HAL server doesn't provide state info, so this is disabled"""
-    # HAL server doesn't provide state information
-    # State data would need to come from StateMachine server instead
-    return 'unknown'
+    """Get state data from StateMachine client"""
+    try:
+        state = state_machine_client.get_state()
+        return state
+    except Exception as e:
+        print(f"Error getting state data: {e}")
+        return 'unknown'
 
 def upload_temperatures_to_postgres(temperatures):
     """Upload temperature data to postgres temperatures table"""

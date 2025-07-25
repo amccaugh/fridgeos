@@ -82,24 +82,24 @@ services:
     stop_grace_period: 1s
 
 
-  # database-scraper:
-  #   build:
-  #     context: ..
-  #     dockerfile: fridgeos-docker/Dockerfile
-  #   container_name: database-scraper
-  #   volumes:
-  #     - ./logs:/app/logs/
-  #     - ../fridgeos:/app/fridgeos-src:ro
-  #   working_dir: /app
-  #   command: python scripts/database-scraper.py
-  #   networks:
-  #     - fridgeos-network
-  #   restart: unless-stopped
-  #   stop_grace_period: 1s
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #       restart: true
+  database-scraper:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: database-scraper
+    volumes:
+      - ./logs:/app/logs/
+      - ../fridgeos:/app/fridgeos-src:ro
+    working_dir: /app
+    command: python scripts/database-scraper.py
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
 
 volumes:
   postgres_data:
