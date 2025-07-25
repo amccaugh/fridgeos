@@ -10,7 +10,7 @@ authors = [
     { name = "Adam McCaughan", email = "adam.mccaughan@nist.gov"},
     { name = "Ryan Morgenstern", email = "ryan.morgenstern@nist.gov"},
 ]
-license = { text = "CC BY-SA" }
+license = "GPL-3.0-or-later"
 dependencies = [
     "psycopg2-binary",
     "pandas",
@@ -26,9 +26,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/amccaugh/fridgeos"
 
-#[tool.setuptools]
-#packages = ["hal", "monitor", "scraper", "statemachine", "zmqhelper"]
-
-#[tool.setuptools.packages.find]
-#include = ["hal", "monitor", "scraper", "statemachine", "zmqhelpers"]
-#namespaces = false
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fridgeos*"]
+exclude = ["logs*", "*.egg-info*"]
