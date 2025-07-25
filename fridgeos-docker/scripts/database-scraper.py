@@ -11,6 +11,8 @@ def get_temperature_data():
     """Get temperature data from StateMachine client"""
     try:
         temperatures = state_machine_client.get_temperatures()
+        # Remove any temperature entries where the value is None
+        temperatures = {k: v for k, v in temperatures.items() if v is not None}
         return temperatures
     except Exception as e:
         print(f"Error getting temperature data: {e}")

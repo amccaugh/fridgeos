@@ -16,6 +16,7 @@ from fridgeos.hal.drivers.srs_sim922 import SIM922
 from fridgeos.hal.drivers.swarm import Lockin, Diode, PumpHeater, HeatSwitch, WarmupHeater
 from fridgeos.hal.drivers.dummy import DummyThermometer, DummyHeater
 import random
+import time
 
 ### HEATERS
 
@@ -126,6 +127,16 @@ class FaultyDummyThermometer_HAL():
         else:
             return 5 + random.random()*0.1
 
+
+
+class LaggyDummyThermometer_HAL():
+    def setup(self, address):
+        self.thermometer = DummyThermometer(address)
+    
+    def get_temperature(self):
+        time.sleep(7)
+        return 7 + random.random()*0.1
+
 hal_classes = {
     'korad-kd3005p': HAL_KD3005P,
     'srs-sim921': HAL_SIM921,
@@ -137,5 +148,6 @@ hal_classes = {
     'DummyThermometer': DummyThermometer_HAL,
     'DummyHeater': DummyHeater_HAL,
     'FaultyDummyHeater': FaultyDummyHeater_HAL,
-    'FaultyDummyThermometer': FaultyDummyThermometer_HAL
+    'FaultyDummyThermometer': FaultyDummyThermometer_HAL,
+    'LaggyDummyThermometer': LaggyDummyThermometer_HAL,
 }
