@@ -1,15 +1,15 @@
 [settings]
-polling_interval = 3.0    # How often to read temperatures from the HAL
+polling_interval = 1.0    # How often to read temperatures from the HAL
 
 [constants]  # Values that can be used as criteria for transitions
 T_switch_high = 20
 
 
 [thermometers.pump]
-corresponding_heater = "1K-pump"
+corresponding_heater = "PUMPHEATER"
 coefficients = {P = 10, I = 1, D = 0, max_value = 50}
 [thermometers.heat_switch]
-corresponding_heater = "1K-switch"
+corresponding_heater = "HS_HEATER"
 coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 
 
@@ -21,14 +21,14 @@ coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 
 [states.warm]
 [states.warming_up]
-1K-pump = 300
-1K-switch = "T_switch_high"
+pump = 300
+heat_switch = "T_switch_high"
 [states.cold]
-1K-pump = 0
-1K-switch = "T_switch_high"
+pump = 0
+heat_switch = "T_switch_high"
 [states.recycling]
-1K-pump = 50
-1K-switch = 0
+pump = 50
+heat_switch = 0
 
 
 
@@ -41,7 +41,7 @@ coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 from = "warm"
 to = "cold"
 criteria = [
-    "1K-pump < 20",
+    "pump < 20",
     "4K < 6",
     "1K < 2",
 ]
@@ -50,7 +50,7 @@ criteria = [
 from = "warm"
 to = "recycling"
 criteria = [
-    "1K-pump < 50",
+    "pump < 50",
     "4K < 5",
     "1K > 2",
 ]

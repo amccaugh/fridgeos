@@ -1,0 +1,38 @@
+[[thermometers]]
+name = "4K"
+hardware = "DummyThermometer"
+# Arguments that will be passed to setup() in the hardware driver
+setup.address = "COM123"
+
+[[thermometers]]
+name = "1K"
+hardware = "DummyThermometer"
+setup.address = "COM123"
+
+[[thermometers]]
+name = "1K-main-plate"
+hardware = "DummyThermometer"
+setup.address = "COM123"
+
+[[thermometers]]
+name = "pump"
+hardware = "DummyThermometer"
+setup.address = "COM123"
+
+[[thermometers]]
+name = "heat_switch"
+hardware = "LaggyDummyThermometer"
+setup.address = "COM123"
+
+[[heaters]]
+name = "PUMPHEATER"
+hardware = "DummyHeater"
+setup.address = "COM123"
+max_value = 15
+
+[[heaters]]
+name = "HS_HEATER"
+hardware = "DummyHeater"
+setup.address = "COM123"
+max_value = 25
+
