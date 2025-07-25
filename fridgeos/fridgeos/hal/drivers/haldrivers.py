@@ -15,6 +15,7 @@ from fridgeos.hal.drivers.srs_sim921 import SIM921
 from fridgeos.hal.drivers.srs_sim922 import SIM922
 from fridgeos.hal.drivers.swarm import Lockin, Diode, PumpHeater, HeatSwitch, WarmupHeater
 from fridgeos.hal.drivers.dummy import DummyThermometer, DummyHeater
+import random
 
 ### HEATERS
 
@@ -65,6 +66,19 @@ class DummyHeater_HAL():
         return self.heater.get_voltage()
 
 
+class FaultyDummyHeater_HAL():
+    def setup(self, address):
+        self.heater = DummyHeater(address)
+    
+    def set_heater_value(self, value):
+        if random.random() < 0.1:
+            raise Exception("Faulty heater")
+        self.heater.set_voltage(value)
+    
+    def get_heater_value(self):
+        return self.heater.get_voltage()
+
+
 ### THERMOMETERS 
 
 class HAL_SIM921():
@@ -102,6 +116,15 @@ class DummyThermometer_HAL():
     def get_temperature(self):
         return self.thermometer.read_temperature()
 
+class FaultyDummyThermometer_HAL():
+    def setup(self, address):
+        self.thermometer = DummyThermometer(address)
+    
+    def get_temperature(self):
+        if random.random() < 0.1:
+            raise Exception("Faulty thermometer")
+        else:
+            return 5 + random.random()*0.1
 
 hal_classes = {
     'korad-kd3005p': HAL_KD3005P,
@@ -112,5 +135,7 @@ hal_classes = {
     'swarm_hph': SWARM_HPH,
     'swarm_lph': SWARM_LPH,
     'DummyThermometer': DummyThermometer_HAL,
-    'DummyHeater': DummyHeater_HAL
+    'DummyHeater': DummyHeater_HAL,
+    'FaultyDummyHeater': FaultyDummyHeater_HAL,
+    'FaultyDummyThermometer': FaultyDummyThermometer_HAL
 }
