@@ -41,7 +41,7 @@ class StateMachineServer:
         self.settings = self._load_settings(config_path)
         
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
-        self.thermometers = self._load_thermometers(config_path)
+        self.heaters = self._load_heaters(config_path)
         self.states = self._load_states(config_path)
         
         # Use polling_interval from [settings] section if available, otherwise use parameter default
@@ -53,12 +53,13 @@ class StateMachineServer:
         self.current_state = list(self.states.keys())[0]    
         self.state_entry_time = time.time()
         self.current_temperatures = {}
-        self.last_update_time = time.time()
-        self.last_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.current_heater_values = {}
+        self.last_temperature_update = time.time()
+        self.last_temperature_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.state_machine_thread: Optional[threading.Thread] = None
         
         self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
-        self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.thermometers)} thermometers, {len(self.states)} states")
+        self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.heaters)} heaters, {len(self.states)} states")
         
         self._setup_routes()
         self._start_state_machine_loop()
@@ -101,8 +102,9 @@ class StateMachineServer:
                     "state_entry_time": self.state_entry_time,
                     "time_in_current_state": round(time.time() - self.state_entry_time, 1),
                     "current_temperatures": self.current_temperatures,
-                    "last_update_time": self.last_update_time,
-                    "last_update_datetime": self.last_update_datetime
+                    "current_heater_values": self.current_heater_values,
+                    "last_temperature_update": round(time.time() - self.last_temperature_update, 1),
+                    "last_temperature_update_datetime": self.last_temperature_update_datetime
                 }
             except Exception as e:
                 self.logger.error(f'Error getting state info: {e}')
@@ -230,24 +232,24 @@ class StateMachineServer:
         self.logger.info(f"Loaded {len(parsed)} transitions")
         return parsed, state_timeouts
 
-    def _load_thermometers(self, config_path):
+    def _load_heaters(self, config_path):
         """
-        Load thermometer configurations from the TOML file.
+        Load heater configurations from the TOML file.
         """
-        self.logger.debug(f"Loading thermometers from {config_path}")
+        self.logger.debug(f"Loading heaters from {config_path}")
         with open(config_path, "rb") as f:
             config = tomllib.load(f)
         
-        thermometers = config.get('thermometers', {})
-        parsed_thermometers = {}
+        heaters = config.get('heaters', {})
+        parsed_heaters = {}
         
-        for thermometer_name, thermometer_config in thermometers.items():
-            # Extract the corresponding heater
-            corresponding_heater = thermometer_config.get('corresponding_heater')
+        for heater_name, heater_config in heaters.items():
+            # Extract the corresponding thermometer
+            corresponding_thermometer = heater_config.get('corresponding_thermometer')
             
-            # Create PID controller for this thermometer
-            coefficients = thermometer_config.get('coefficients', {})
-            self.logger.debug(f"Creating PID for {thermometer_name}: P={coefficients.get('P', 0)}, I={coefficients.get('I', 0)}, D={coefficients.get('D', 0)}, max_value={coefficients.get('max_value', 100)}")
+            # Create PID controller for this heater
+            coefficients = heater_config.get('coefficients', {})
+            self.logger.debug(f"Creating PID for {heater_name}: P={coefficients.get('P', 0)}, I={coefficients.get('I', 0)}, D={coefficients.get('D', 0)}, max_value={coefficients.get('max_value', 100)}")
             
             pid_controller = PID(
                 Kp=coefficients.get('P', 0),
@@ -257,14 +259,14 @@ class StateMachineServer:
                 output_limits=(0, coefficients['max_value'])
             )
             
-            parsed_thermometers[thermometer_name] = {
-                'corresponding_heater': corresponding_heater,
+            parsed_heaters[heater_name] = {
+                'corresponding_thermometer': corresponding_thermometer,
                 'pid_controller': pid_controller
             }
-            self.logger.debug(f"Configured {thermometer_name} -> {corresponding_heater}")
+            self.logger.debug(f"Configured {heater_name} -> {corresponding_thermometer}")
         
-        self.logger.info(f"Loaded {len(parsed_thermometers)} thermometers")
-        return parsed_thermometers
+        self.logger.info(f"Loaded {len(parsed_heaters)} heaters")
+        return parsed_heaters
 
     def _load_states(self, config_path):
         """
@@ -302,18 +304,19 @@ class StateMachineServer:
         self.logger.info(f"Updating heater setpoints for state: {new_state}")
         thermometer_config = self.states[new_state]
         for thermometer, value in thermometer_config.items():
-            if thermometer in self.thermometers:
-                self.logger.debug(f'Setting {thermometer} setpoint to {value}')
-                heater_name = self.thermometers[thermometer]['corresponding_heater']
-                pid_controller = self.thermometers[thermometer]['pid_controller']
-                pid_controller.setpoint = value
-                self.logger.debug(f'PID setpoint for {thermometer} -> {heater_name} set to {value}')
+            # Find heaters that correspond to this thermometer
+            for heater_name, heater_config in self.heaters.items():
+                if heater_config['corresponding_thermometer'] == thermometer:
+                    self.logger.debug(f'Setting {thermometer} setpoint to {value} for heater {heater_name}')
+                    pid_controller = heater_config['pid_controller']
+                    pid_controller.setpoint = value
+                    self.logger.debug(f'PID setpoint for {heater_name} -> {thermometer} set to {value}')
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
         current_temperatures = self.hal_client.get_temperatures()
-        self.last_update_time = time.time()
-        self.last_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.last_temperature_update = time.time()
+        self.last_temperature_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if criterion['sensor'] not in current_temperatures:
             self.logger.error(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
             return False
@@ -365,22 +368,29 @@ class StateMachineServer:
     def update_heaters(self):
         # Get temperatures from HAL Client
         self.current_temperatures = self.hal_client.get_temperatures()
+        self.last_temperature_update = time.time()
         self.logger.debug(f"Current temperatures: {self.current_temperatures}")
-        # For each thermometer listed in the HAL
-        for thermometer_name, T in self.current_temperatures.items():
-            # If the thermometer is listed in the thermometers section of the config,
-            # set the corresponding heater to the value
-            self.logger.debug(f'Updating heater {thermometer_name} to {T}')
-            if T is None:
-                self.logger.error(f'No temperature reading received for {thermometer_name}')
+        
+        # For each heater, check if its corresponding thermometer has a temperature reading
+        for heater_name, heater_config in self.heaters.items():
+            thermometer_name = heater_config['corresponding_thermometer']
+            
+            if thermometer_name not in self.current_temperatures:
+                self.logger.error(f'No temperature entry for {thermometer_name} (heater {heater_name})')
                 continue
-            if thermometer_name in self.thermometers:
-                heater_name = self.thermometers[thermometer_name].get('corresponding_heater')
-                if heater_name:
-                    pid_controller = self.thermometers[thermometer_name]['pid_controller']
-                    new_value = pid_controller(T)
-                    self.logger.debug(f'Setting heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
-                    self.hal_client.set_heater_value(heater_name, new_value)
+                
+            T = self.current_temperatures[thermometer_name]
+            if T is None:
+                self.logger.error(f'Invalid temperature reading received for {thermometer_name} (heater {heater_name})')
+                continue
+                
+            self.logger.debug(f'Updating heater {heater_name} based on thermometer {thermometer_name} = {T}')
+            pid_controller = heater_config['pid_controller']
+            new_value = pid_controller(T)
+            self.logger.debug(f'Setting heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
+            self.hal_client.set_heater_value(heater_name, new_value)
+            # Store the current heater value
+            self.current_heater_values[heater_name] = new_value
 
     def run(self):
         self.logger.info('Starting state machine loop')

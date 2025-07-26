@@ -209,6 +209,9 @@ class HALServer:
     def set_heater_value(self, name, value):
         """ Set the value of a single heater """
         self.logger.debug(f"Setting heater {name} to {value}")
+        if value > self.get_heater_max_values()[name]:
+            value = self.get_heater_max_values()[name]
+            self.logger.warning(f"Heater {name} value {value} is greater than max value {self.get_heater_max_values()[name]}, setting to max value")
         hw = self.get_hardware(name=name, hardware_type='heaters')
         return {name: hw.set_heater_value(value)}
 
