@@ -27,6 +27,19 @@ def get_state_data():
         print(f"Error getting state data: {e}")
         return 'unknown'
 
+def get_heater_data():
+    """Get heater data from StateMachine client"""
+    try:
+        # Get the root endpoint which includes current_heater_values
+        root_data = state_machine_client.get_root()
+        heater_values = root_data.get('current_heater_values', {})
+        # Remove any heater entries where the value is None
+        heater_values = {k: v for k, v in heater_values.items() if v is not None}
+        return heater_values
+    except Exception as e:
+        print(f"Error getting heater data: {e}")
+        return {}
+
 def upload_temperatures_to_postgres(temperatures):
     """Upload temperature data to postgres temperatures table"""
     if not temperatures:
@@ -92,6 +105,39 @@ def upload_state_to_postgres(state):
         if 'conn' in locals():
             conn.close()
 
+def upload_heaters_to_postgres(heaters):
+    """Upload heater data to postgres heaters table"""
+    if not heaters:
+        print("No heater data to upload")
+        return
+    
+    try:
+        conn = psycopg2.connect(
+            host='postgres',
+            port=5432,
+            user='fridgeosuser',
+            password='fridgeos123',
+            database='fridgedb',
+            connect_timeout=1
+        )
+        
+        with conn.cursor() as cursor:
+            timestamp = datetime.now(timezone.utc)
+            
+            for heatername, value in heaters.items():
+                sql = """INSERT INTO heaters (time, heatername, value) 
+                        VALUES (%s, %s, %s)"""
+                cursor.execute(sql, (timestamp, heatername, value))
+            
+            conn.commit()
+            print(f"Successfully uploaded {len(heaters)} heater readings")
+            
+    except Exception as e:
+        print(f"Error uploading heaters to database: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 if __name__ == "__main__":
     while True:
         temperatures = get_temperature_data()
@@ -99,5 +145,8 @@ if __name__ == "__main__":
         
         state = get_state_data()
         upload_state_to_postgres(state)
+        
+        heaters = get_heater_data()
+        upload_heaters_to_postgres(heaters)
         
         time.sleep(1)

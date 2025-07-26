@@ -9,6 +9,12 @@ CREATE TABLE states (
     state TEXT NOT NULL);
 SELECT create_hypertable('states', 'time');
 
+CREATE TABLE heaters (
+    time TIMESTAMPTZ NOT NULL,
+    heatername TEXT NOT NULL,
+    value REAL NOT NULL);
+SELECT create_hypertable('heaters', 'time');
+
 -- Create fridgeosuser
 CREATE USER fridgeosuser WITH PASSWORD 'fridgeos123';
 GRANT CONNECT ON DATABASE fridgedb TO fridgeosuser;
@@ -16,4 +22,5 @@ GRANT USAGE ON SCHEMA public TO fridgeosuser;
 GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO fridgeosuser;
 GRANT SELECT, INSERT ON TABLE temperatures TO fridgeosuser;
 GRANT SELECT, INSERT ON TABLE states TO fridgeosuser;
+GRANT SELECT, INSERT ON TABLE heaters TO fridgeosuser;
 ALTER ROLE fridgeosuser SET statement_timeout = '60s';

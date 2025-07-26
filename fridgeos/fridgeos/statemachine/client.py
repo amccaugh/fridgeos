@@ -36,6 +36,12 @@ class StateMachineClient:
         resp.raise_for_status()
         return resp.json()
 
+    def get_root(self):
+        """Get all data from the root endpoint of the server."""
+        resp = requests.get(f"{self.base_url}/")
+        resp.raise_for_status()
+        return resp.json()
+
 
 if __name__ == "__main__":
     state_machine_client = StateMachineClient(base_url = 'http://localhost:8001')
