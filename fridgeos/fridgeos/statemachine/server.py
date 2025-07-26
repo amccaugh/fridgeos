@@ -28,7 +28,7 @@ class DummyHalClient:
         return {'pump': 1.23, '4K': 4.56, '1K': 1.1, '1K-main-plate': 1.05}
 
 class StateMachineServer:
-    def __init__(self, config_path, log_path, hal_client, polling_interval = 1, debug=True, http_port=8001):
+    def __init__(self, config_path, log_path, hal_client, polling_interval = 5, debug=True, http_port=8001):
         self.app = FastAPI(title="State Machine Server", version="1.0.0")
         self.port = http_port
         self.server_thread: Optional[threading.Thread] = None
@@ -45,6 +45,7 @@ class StateMachineServer:
         self.states = self._load_states(config_path)
         
         # Use polling_interval from [settings] section if available, otherwise use parameter default
+        self.logger.info(f'Using polling interval: {polling_interval}')
         self.polling_interval = self.settings.get('polling_interval', polling_interval)
         self.hal_client = hal_client
         
@@ -330,7 +331,7 @@ class StateMachineServer:
         now = time.time()
         for t in self.criteria:
             if t['from'] == self.current_state:
-                self.logger.debug(f'Checking transition from {self.current_state} to {t["to"]}')
+                self.logger.debug(f'Checking transition: {self.current_state}->{t["to"]}')
                 timeout = self.state_timeouts.get((t['from'], t['to']))
                 # Check if all criteria are met
                 if all(self._check_criterion(c) for c in t['criteria']):
@@ -369,6 +370,7 @@ class StateMachineServer:
         for thermometer_name, T in self.current_temperatures.items():
             # If the thermometer is listed in the thermometers section of the config,
             # set the corresponding heater to the value
+            self.logger.debug(f'Updating heater {thermometer_name} to {T}')
             if T is None:
                 self.logger.error(f'No temperature reading received for {thermometer_name}')
                 continue

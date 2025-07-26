@@ -1,3 +1,4 @@
+- Add required sequential temp readings to avoid glitches changing state
 - Create a new "heaters" databse table, make the database-scraper upload it to that table, and create a grafana panel called "Heater values" underneath the existing panels with a time series visualization
 - Make last_update_time in seconds since last update
 

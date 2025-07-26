@@ -5,11 +5,11 @@ polling_interval = 3.0    # How often to read temperatures from the HAL
 T_switch_high = 20
 
 
-[thermometers.pump]
-corresponding_heater = "1K-pump"
+[heaters.1K-pump]
+corresponding_thermometer = "1K-pump"
 coefficients = {P = 10, I = 1, D = 0, max_value = 50}
-[thermometers.heat_switch]
-corresponding_heater = "1K-switch"
+[heaters.1K-switch]
+corresponding_thermometer = "1K-switch"
 coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 
 
@@ -58,7 +58,6 @@ criteria = [
 [[transitions]]
 from = "recycling"
 to = "cold"
-max_seconds = 7200
 criteria = [
     "1K < 4.75",
     "1K-main-plate < 4.75",
