@@ -59,7 +59,6 @@ from = "recycling"
 to = "cold"
 criteria = [
     "1K < 4.75",
-    "1K-main-plate < 4.75",
     "4K < 4.75",
 ]
 
