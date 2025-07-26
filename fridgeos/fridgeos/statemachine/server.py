@@ -103,6 +103,7 @@ class StateMachineServer:
                     "time_in_current_state": round(time.time() - self.state_entry_time, 1),
                     "current_temperatures": self.current_temperatures,
                     "current_heater_values": self.current_heater_values,
+                    "current_state_target_temperatures": self.states[self.current_state],
                     "last_temperature_update": round(time.time() - self.last_temperature_update, 1),
                     "last_temperature_update_datetime": self.last_temperature_update_datetime
                 }
