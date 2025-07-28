@@ -10,7 +10,7 @@ corresponding_thermometer = "1K-pump"
 coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 [heaters.1K-switch]
 corresponding_thermometer = "1K-switch"
-coefficients = {P = 10, I = 1, D = 0, max_value = 25}
+coefficients = {P = 1, I = 1, D = 0, max_value = 25}
 
 
 
