@@ -23,12 +23,15 @@ coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 [states.warming_up]
 1K-pump = 250
 1K-switch = 250
-[states.sorption]
+[states.sorption_starting]
 1K-pump = 0
 1K-switch = "T_switch_high"
 [states.cold]
 1K-pump = 0
 1K-switch = "T_switch_high"
+[states.initial_cooldown]
+1K-pump = 50
+1K-switch = 0
 [states.recycling]
 1K-pump = 50
 1K-switch = 0
@@ -50,7 +53,7 @@ criteria = [
 
 [[transitions]] # Normal initial cooldown
 from = "warm"
-to = "recycling"
+to = "initial_cooldown"
 criteria = [
     "1K-pump < 50",
     "4K < 15",
@@ -58,15 +61,15 @@ criteria = [
 ]
 
 [[transitions]] # Normal initial cooldown
-from = "recycling"
-to = "sorption"
+from = "initial_cooldown"
+to = "sorption_starting"
 criteria = [
     "1K < 4.75",
     "4K < 4.75",
 ]
 
 [[transitions]]
-from = "sorption"
+from = "sorption_starting"
 to = "cold"
 criteria = [
     "1K < 1.5",
@@ -78,4 +81,11 @@ from = "cold"
 to = "recycling"
 criteria = [
     "1K > 2",
+]
+
+[[transitions]]
+from = "recycling"
+to = "sorption_starting"
+criteria = [
+    "1K-pump > 40",
 ]

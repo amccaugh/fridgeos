@@ -1,4 +1,4 @@
-- 
+- Why do I need to --build every time I change the toml?
 - Have HAL return "success" when it does something so we know heaters got set, and statemachine doesn't update heater values unless
 - Add timed entry for a given state (e.g. 7am)
 [[timed_transition]]

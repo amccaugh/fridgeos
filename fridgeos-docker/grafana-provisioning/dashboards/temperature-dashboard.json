@@ -165,7 +165,7 @@
         ]
       },
       "gridPos": {
-        "h": 9,
+        "h": 17,
         "w": 8,
         "x": 16,
         "y": 0
@@ -187,7 +187,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  sensorname AS \"Sensor\",\n  ROUND(temperature::numeric, 2) AS \"Temperature (K)\",\n  ROUND(EXTRACT(EPOCH FROM (NOW() - time)) / 60.0, 1) AS \"Minutes Ago\"\nFROM temperatures t1\nWHERE time = (\n  SELECT MAX(time) \n  FROM temperatures t2 \n  WHERE t2.sensorname = t1.sensorname\n)\nORDER BY sensorname",
+          "rawSql": "SELECT\n  sensorname AS \"Sensor\",\n  ROUND(temperature::numeric, 2) AS \"Temp (K)\",\n  ROUND(EXTRACT(EPOCH FROM (NOW() - time)) / 60.0, 1) AS \"Min Ago\"\nFROM temperatures t1\nWHERE time = (\n  SELECT MAX(time) \n  FROM temperatures t2 \n  WHERE t2.sensorname = t1.sensorname\n)\nORDER BY sensorname",
           "refId": "A",
           "select": [
             [
