@@ -10,14 +10,15 @@ corresponding_thermometer = "1K-pump"
 coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 [heaters.1K-switch]
 corresponding_thermometer = "1K-switch"
-coefficients = {P = 1, I = 1, D = 0, max_value = 25}
+coefficients = {P = 1, I = 1, D = 0, max_value = 10}
 
 
 
 ###### States
-# Set values here to the nominal temperatures you want the heaters
-# to aim for while in that state.  The first state listed is the initial state,
-# and ALL states must be enumerated here
+# Set values here to the values you want the heaters
+# to aim for while in that state.  For heaters that are PIDs, values should be in
+# Kelvin, corresponding to the target temperature you want that heater to achieve
+# The first state listed is the initial state, and ALL states must be enumerated here
 
 [states.warm]
 [states.warming_up]
