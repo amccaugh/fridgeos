@@ -21,8 +21,8 @@ max_value = 25
 # The first state listed is the initial state, and ALL states must be enumerated here
 
 [states.warm]
-1K-pump = 250
-1K-switch = 250
+1K-pump = 0
+1K-switch = 0
 [states.warming_up]
 1K-pump = 250
 1K-switch = 250
@@ -49,12 +49,12 @@ max_value = 25
 from = "warm"
 to = "cold"
 criteria = [
-    "1K-pump < 20",
+    "1K-pump < 50",
     "4K < 6",
     "1K < 2",
 ]
 
-[[transitions]] # Normal initial cooldown
+[[transitions]]
 from = "warm"
 to = "condensing_helium"
 criteria = [
@@ -63,7 +63,7 @@ criteria = [
     "1K > 2",
 ]
 
-[[transitions]] # Normal initial cooldown
+[[transitions]]
 from = "condensing_helium"
 to = "sorption_starting"
 criteria = [
