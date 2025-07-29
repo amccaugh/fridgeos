@@ -37,7 +37,7 @@ class HALServer:
         self.logger.info(f"HAL Server initialized with {len(self.hardware['thermometers'])} thermometers and {len(self.hardware['heaters'])} heaters")
         
         self._setup_routes()
-        print('HAL Server initialized')
+        self.logger.info('HAL Server initialized')
     
     def _setup_routes(self):
         @self.app.get("/")
@@ -142,7 +142,7 @@ class HALServer:
             )
             self.server_thread.daemon = True
             self.server_thread.start()
-            print(f'HAL Server started on port {self.port}')
+            self.logger.info(f'HAL Server started on port {self.port}')
     
     def get_hardware(self, name, hardware_type):
         """ Checks that a device with the given name exists
@@ -176,13 +176,13 @@ class HALServer:
                 # Create the device as a python object
                 hal_class = hal_classes[hw_name]
                 python_object = hal_class()
-                print(f'Attempting to setup {hw_name} hardware with setup arguments {hw}["setup"]')
+                self.logger.debug(f'Attempting to setup {hw_name} hardware with setup arguments {hw.get("setup", {})}')
                 # Configure the device
-                print(hw)
+                self.logger.debug(f'Hardware config: {hw}')
                 if 'setup' not in hw:
                     hw['setup'] = {}
                 python_object.setup(**hw['setup'])
-                print(f'Added {hw["hardware"]} thermometer successfully')
+                self.logger.info(f'Added {hw["hardware"]} (hardware type {hardware_type}) successfully')
                 # Add the thermometer object to self.thermometers dictionary
                 hw['python_object'] = python_object
                 name = hw.pop('name')
