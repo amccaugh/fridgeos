@@ -63,6 +63,12 @@ services:
       - fridgeos-network
     restart: unless-stopped
     stop_grace_period: 1s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   statemachine:
     build:
@@ -80,6 +86,10 @@ services:
       - fridgeos-network
     restart: unless-stopped
     stop_grace_period: 1s
+    depends_on:
+      hal:
+        condition: service_healthy
+        restart: true
 
 
   database-scraper:

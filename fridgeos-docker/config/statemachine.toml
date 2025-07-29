@@ -21,6 +21,8 @@ max_value = 25
 # The first state listed is the initial state, and ALL states must be enumerated here
 
 [states.warm]
+1K-pump = 250
+1K-switch = 250
 [states.warming_up]
 1K-pump = 250
 1K-switch = 250
