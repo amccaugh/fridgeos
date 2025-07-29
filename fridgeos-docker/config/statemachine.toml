@@ -7,10 +7,8 @@ switch_high_value = 4
 
 [heaters.1K-pump] # This is a PID heater
 corresponding_thermometer = "1K-pump"
-pid_coefficients = {P = 10, I = 1, D = 0}
-max_value = 25
+pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 [heaters.1K-switch] # This is a non-PID heater
-max_value = 25
 
 
 

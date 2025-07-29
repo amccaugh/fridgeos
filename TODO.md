@@ -1,11 +1,6 @@
 - Make it possible to set EITHER value or temperature directly for any heater
 - Have HAL return "success" when it does something so we know heaters got set, and statemachine doesn't update heater values unless
-- Add timed entry for a given state (e.g. 7am)
-[[timed_transition]]
-from = "cold" # optional
-to = "recycling"
-hour_of_day = 21
-- Rename files to hal.py with HALclient and HALserver etc
+- Allow state machine to be paused (either stop state transitions or state transitions + PID heater control)
 
 Optional:
 - Add required sequential temp readings to avoid glitches changing state

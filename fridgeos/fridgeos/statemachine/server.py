@@ -253,7 +253,7 @@ class StateMachineServer:
             if pid_coefficients:
                 # PID-controlled heater
                 corresponding_thermometer = heater_config['corresponding_thermometer']
-                max_value = heater_config['max_value']
+                max_value = pid_coefficients['max_value']
                 self.logger.debug(f"Creating PID heater {heater_name}: P={pid_coefficients.get('P', 0)}, I={pid_coefficients.get('I', 0)}, D={pid_coefficients.get('D', 0)}, max_value={max_value}")
                 
                 pid_controller = PID(
@@ -272,13 +272,11 @@ class StateMachineServer:
                 self.logger.debug(f"Configured PID heater {heater_name} -> {corresponding_thermometer}")
                 
             else:
-                # Direct-value heater
-                max_value = heater_config.get('max_value', 100)
-                self.logger.debug(f"Creating non-PID heater {heater_name} with max_value={max_value}")
+                # Direct-value heater (no max_value for non-PID heaters)
+                self.logger.debug(f"Creating non-PID heater {heater_name}")
                 
                 parsed_heaters[heater_name] = {
-                    'pid': False,
-                    'max_value': max_value
+                    'pid': False
                 }
                 self.logger.debug(f"Configured non-PID heater {heater_name}")
         
@@ -430,9 +428,6 @@ class StateMachineServer:
                 # Direct-value heater
                 if 'current_value' in heater_config:
                     new_value = heater_config['current_value']
-                    # Clamp to max_value if specified
-                    max_value = heater_config.get('max_value', 100)
-                    new_value = min(new_value, max_value)
                     
                     self.logger.debug(f'Setting direct heater {heater_name} to {new_value}')
                     self.hal_client.set_heater_value(heater_name, new_value)

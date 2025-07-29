@@ -83,7 +83,6 @@ services:
       - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
     working_dir: /app
-    working_dir: /app
     command: python scripts/statemachine-server.py
     ports:
       - "8001:8001"
