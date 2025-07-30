@@ -309,7 +309,7 @@ def example_usage():
     
     try:
         # Connect to HAL server
-        client = HALClient(ip='127.0.0.1', port=8000)
+        client = HALClient(ip='127.0.0.1', port=8001)
         
         print("1. Health check:")
         health = client.health_check()
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     import os
     
     # Default configuration
-    port = 8000
+    port = 8001
     hardware_toml_path = os.path.join(os.path.dirname(__file__), "statemachine/config/hal.toml")
     log_path = "./hal_logs"
     debug = True

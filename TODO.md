@@ -1,3 +1,4 @@
+- Add statemachine timer to show when things are stale
 - Add simple panel to do "recycle now" and "warm up"
 - Make easier to select config, with default dummy-config if nothing in /config/
 - Make it possible to set EITHER value or temperature directly for any heater

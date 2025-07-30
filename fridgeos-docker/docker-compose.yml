@@ -70,13 +70,13 @@ services:
     working_dir: /app
     command: python scripts/hal-server.py
     ports:
-      - "8000:8000"
+      - "8001:8001"
     networks:
       - fridgeos-network
     restart: unless-stopped
     stop_grace_period: 1s
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -95,7 +95,7 @@ services:
     working_dir: /app
     command: python scripts/statemachine-server.py
     ports:
-      - "8001:8001"
+      - "8000:8000"
     networks:
       - fridgeos-network
     restart: unless-stopped

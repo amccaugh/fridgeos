@@ -29,8 +29,8 @@ def main():
     log_path = "./logs/"
     
     # Server configuration
-    hal_port = 8000
-    statemachine_port = 8001
+    hal_port = 8001
+    statemachine_port = 8000
     
     # Initialize HAL Server
     print(f"Initializing HAL Server on port {hal_port}...")

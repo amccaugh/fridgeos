@@ -29,7 +29,7 @@ class DummyHalClient:
         return {'pump': 1.23, '4K': 4.56, '1K': 1.1, '1K-main-plate': 1.05}
 
 class StateMachineServer:
-    def __init__(self, config_path, log_path, hal_client, polling_interval = 5, debug=True, http_port=8001):
+    def __init__(self, config_path, log_path, hal_client, polling_interval = 5, debug=True, http_port=8000):
         self.app = FastAPI(title="State Machine Server", version="1.0.0")
         self.port = http_port
         self.server_thread: Optional[threading.Thread] = None
@@ -202,7 +202,7 @@ class StateMachineServer:
             return f"""
             <h3>FridgeOS State Control</h3>
             <p>Current state: <strong>{self.current_state}</strong></p>
-            <p>Available states:</p>
+            <p>Available states (click to change to new state):</p>
             <ul>
                 {state_links}
             </ul>
@@ -515,7 +515,7 @@ class StateMachineServer:
 
 
 class StateMachineClient:
-    def __init__(self, base_url="http://localhost:8001"):
+    def __init__(self, base_url="http://localhost:8000"):
         self.base_url = base_url.rstrip("/")
 
     def get_state(self):

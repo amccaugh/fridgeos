@@ -5,7 +5,7 @@ import time
 from fridgeos.statemachine import StateMachineClient
 
 
-state_machine_client = StateMachineClient(base_url='http://statemachine:8001')
+state_machine_client = StateMachineClient(base_url='http://statemachine:8000')
 
 def get_temperature_data():
     """Get temperature data from StateMachine client"""
