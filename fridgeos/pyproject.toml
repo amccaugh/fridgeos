@@ -21,6 +21,7 @@ dependencies = [
     "simple-pid",
     "fastapi",
     "uvicorn",
+    "python-multipart",
 ]
 
 [project.urls]

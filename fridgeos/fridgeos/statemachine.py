@@ -7,7 +7,8 @@ import operator
 from typing import Dict, Any, Optional
 from simple_pid import PID
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from fridgeos.logger import FridgeLogger
 import uvicorn
@@ -61,8 +62,13 @@ class StateMachineServer:
         self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.heaters)} heaters, {len(self.states)} states")
         
-        self._setup_routes()
-        self._start_state_machine_loop()
+        self.logger.info(f"Starting up server")
+        try:
+            self._setup_routes()
+            self._start_state_machine_loop()
+        except Exception as e:
+            self.logger.error(f"Error starting up server: {e}")
+            raise e
     
     def _load_constants(self, config_path):
         """Load constants from the [constants] section of the TOML file."""
@@ -160,6 +166,35 @@ class StateMachineServer:
             except Exception as e:
                 self.logger.error(f'Error getting temperatures: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.get("/control", response_class=HTMLResponse)
+        async def control_page():
+            state_links = "".join([
+                f'<li><a href="/control/{state}">{state}</a></li>' 
+                for state in self.states.keys()
+            ])
+            return f"""
+            <h3>FridgeOS State Control</h3>
+            <p>Current state: <strong>{self.current_state}</strong></p>
+            <p>Available states:</p>
+            <ul>
+                {state_links}
+            </ul>
+            """
+
+        @self.app.get("/control/{state}")
+        async def set_state_link(state: str):
+            result = self.make_transition(state)
+            if result:
+                return HTMLResponse(f"""
+                <p>State changed to <strong>{state}</strong></p>
+                <p><a href="/control">← Back to control page</a></p>
+                """)
+            else:
+                return HTMLResponse(f"""
+                <p>Error: Invalid state <strong>{state}</strong></p>
+                <p><a href="/control">← Back to control page</a></p>
+                """)
     
     def start_server(self):
         """Start the FastAPI server in a separate thread"""
