@@ -31,8 +31,7 @@ def get_heater_data():
     """Get heater data from StateMachine client"""
     try:
         # Get the root endpoint which includes current_heater_values
-        root_data = state_machine_client.get_root()
-        heater_values = root_data.get('current_heater_values', {})
+        heater_values = state_machine_client.get_heaters()
         # Remove any heater entries where the value is None
         heater_values = {k: v for k, v in heater_values.items() if v is not None}
         return heater_values

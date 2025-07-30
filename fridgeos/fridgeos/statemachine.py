@@ -97,8 +97,23 @@ class StateMachineServer:
             self.logger.info('State machine started automatically')
     
     def _setup_routes(self):
-        @self.app.get("/")
+        @self.app.get("/", response_class=HTMLResponse)
         async def root():
+            return """
+            <h2>FridgeOS State Machine Server</h2>
+            <ul>
+                <li><a href="/info">Server Info</a> - Detailed status and configuration</li>
+                <li><a href="/control">State Control</a> - Change system state</li>
+                <li><a href="/temperatures">Temperatures</a> - Current temperature readings</li>
+                <li><a href="/heaters">Heaters</a> - Current heater values</li>
+                <li><a href="/state">Current State</a> - Current state info only</li>
+                <li><a href="/statelist">Available States</a> - List of all possible states</li>
+                <li><a href="/health">Health Check</a> - Simple health status</li>
+            </ul>
+            """
+
+        @self.app.get("/info")
+        async def info():
             try:
                 return {
                     "service": "FridgeOS State Machine Server",
@@ -165,6 +180,17 @@ class StateMachineServer:
                 return self.current_temperatures
             except Exception as e:
                 self.logger.error(f'Error getting temperatures: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.get("/heaters")
+        async def get_heaters():
+            """
+            Returns the current heater values as reported by the state machine.
+            """
+            try:
+                return self.current_heater_values
+            except Exception as e:
+                self.logger.error(f'Error getting heater values: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.get("/control", response_class=HTMLResponse)
@@ -436,6 +462,15 @@ class StateMachineServer:
         self.last_temperature_update = time.time()
         self.logger.debug(f"Current temperatures: {self.current_temperatures}")
         
+        # Get current heater values from HAL Client
+        try:
+            hal_heater_values = self.hal_client.get_heater_values()
+            self.logger.debug(f"Current heater values from HAL: {hal_heater_values}")
+            # Update our stored values with actual HAL values
+            self.current_heater_values.update(hal_heater_values)
+        except Exception as e:
+            self.logger.error(f"Error getting heater values from HAL: {e}")
+        
         # Update each heater based on its type
         for heater_name, heater_config in self.heaters.items():
             if heater_config['pid']:
@@ -456,8 +491,6 @@ class StateMachineServer:
                 new_value = pid_controller(T)
                 self.logger.debug(f'Setting PID heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
                 self.hal_client.set_heater_value(heater_name, new_value)
-                # Store the current heater value
-                self.current_heater_values[heater_name] = new_value
                 
             else:
                 # Direct-value heater
@@ -466,8 +499,6 @@ class StateMachineServer:
                     
                     self.logger.debug(f'Setting direct heater {heater_name} to {new_value}')
                     self.hal_client.set_heater_value(heater_name, new_value)
-                    # Store the current heater value
-                    self.current_heater_values[heater_name] = new_value
                 else:
                     self.logger.warning(f'No current_value set for direct heater {heater_name}')
 
@@ -521,6 +552,12 @@ class StateMachineClient:
     def get_root(self):
         """Get all data from the root endpoint of the server."""
         resp = requests.get(f"{self.base_url}/")
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_heaters(self):
+        """Get all heater values from the server."""
+        resp = requests.get(f"{self.base_url}/heaters")
         resp.raise_for_status()
         return resp.json()
 
