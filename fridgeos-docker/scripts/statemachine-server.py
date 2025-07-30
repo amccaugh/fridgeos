@@ -1,6 +1,6 @@
 import uvicorn
 from fridgeos.statemachine.server import StateMachineServer
-from fridgeos.hal.client import HALClient
+from fridgeos.hal import HALClient
 
 halclient = HALClient(ip='hal', port=8000)
 

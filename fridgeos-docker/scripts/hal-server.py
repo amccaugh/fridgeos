@@ -1,5 +1,5 @@
 import uvicorn
-from fridgeos.hal.server import HALServer
+from fridgeos.hal import HALServer
 
 print('Attempting to start HAL server')
 server = HALServer(port=8000,

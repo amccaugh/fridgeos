@@ -66,7 +66,7 @@ setup.address = "/dev/ttyUSB1"
 ### 2. Start the HAL Server
 
 ```python
-from fridgeos.hal.server import HALServer
+from fridgeos.hal import HALServer
 
 server = HALServer(config_file="your-config.toml")
 server.start()
@@ -75,7 +75,7 @@ server.start()
 ### 3. Connect a Client
 
 ```python
-from fridgeos.hal.client import HALClient
+from fridgeos.hal import HALClient
 
 client = HALClient()
 temp = client.get_temperature("mixing_chamber")
@@ -161,7 +161,7 @@ setup.slot = 3
 Test the new driver:
 
 ```python
-from fridgeos.hal.client import HALClient
+from fridgeos.hal import HALClient
 
 client = HALClient()
 temp = client.get_temperature("sample_thermometer")

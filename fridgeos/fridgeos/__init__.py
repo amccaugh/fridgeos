@@ -1,5 +1,4 @@
-from fridgeos.hal.server import HALServer
-from fridgeos.hal.client import HALClient
+from fridgeos.hal import HALServer, HALClient
 from fridgeos.scraper.scraper import Scraper, PostgresUploader
 from fridgeos.statemachine.server import StateMachineServer
 from fridgeos.statemachine.client import StateMachineClient

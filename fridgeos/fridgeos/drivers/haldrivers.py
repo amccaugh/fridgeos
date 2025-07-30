@@ -10,11 +10,11 @@
     # get_heater_value()
 # If you add a new driver, make sure to add it to the hal_classes dictionary at the bottom of this file.
 
-from fridgeos.hal.drivers.korad_kd3005p import KD3005P
-from fridgeos.hal.drivers.srs_sim921 import SIM921
-from fridgeos.hal.drivers.srs_sim922 import SIM922
-from fridgeos.hal.drivers.swarm import Lockin, Diode, PumpHeater, HeatSwitch, WarmupHeater
-from fridgeos.hal.drivers.dummy import DummyThermometer, DummyHeater
+from fridgeos.drivers.korad_kd3005p import KD3005P
+from fridgeos.drivers.srs_sim921 import SIM921
+from fridgeos.drivers.srs_sim922 import SIM922
+from fridgeos.drivers.swarm import Lockin, Diode, PumpHeater, HeatSwitch, WarmupHeater
+from fridgeos.drivers.dummy import DummyThermometer, DummyHeater
 import random
 import time
 
