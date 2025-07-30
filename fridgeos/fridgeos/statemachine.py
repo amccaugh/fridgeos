@@ -62,6 +62,9 @@ class StateMachineServer:
         self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.heaters)} heaters, {len(self.states)} states")
         
+        # Set heater setpoints for the initial state
+        self.update_heater_setpoints(self.current_state)
+        
         self.logger.info(f"Starting up server")
         try:
             self._setup_routes()
