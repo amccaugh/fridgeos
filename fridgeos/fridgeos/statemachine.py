@@ -1,4 +1,3 @@
-#%%
 import tomllib
 import os
 from datetime import datetime
@@ -12,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fridgeos.logger import FridgeLogger
 import uvicorn
+import requests
 
 class StateChangeRequest(BaseModel):
     state: str
@@ -447,31 +447,45 @@ class StateMachineServer:
             time.sleep(self.polling_interval)
 
 
-def example_usage():
-    """Example script showing how to use the FastAPI StateMachineServer"""
-    print("=== FastAPI StateMachineServer Example Usage ===")
-    
-    print("Example REST API endpoints:")
-    print("GET  /                     - Server info and current state")
-    print("GET  /health               - Health check")
-    print("GET  /state                - Get current state info")
-    print("PUT  /state                - Change state (JSON body: {'state': 'warm'})")
-    print("GET  /states               - Get available states")
-    print("\nExample curl commands:")
-    print("curl http://localhost:8001/")
-    print("curl http://localhost:8001/state")
-    print("curl -X PUT http://localhost:8001/state -H 'Content-Type: application/json' -d '{\"state\": \"warm\"}'")
 
+class StateMachineClient:
+    def __init__(self, base_url="http://localhost:8001"):
+        self.base_url = base_url.rstrip("/")
 
-if __name__ == '__main__':
-    server = StateMachineServer(
-        config_path = './config/statemachine.toml',
-        log_path='./logs/',
-        hal_client=DummyHalClient(),
-        debug = True,
-        http_port=8001,
-    )
-    
-    # Start the FastAPI server
-    print(f"Starting FastAPI server on http://0.0.0.0:{server.port}")
-    uvicorn.run(server.app, host="0.0.0.0", port=server.port, log_level="info")
+    def get_state(self):
+        """Get the current state from the server (just the state string)."""
+        resp = requests.get(f"{self.base_url}/state")
+        resp.raise_for_status()
+        data = resp.json()
+        return data["current_state"]
+
+    def set_state(self, state):
+        """Set the state on the server. Returns None if successful, raises an error if not."""
+        resp = requests.put(
+            f"{self.base_url}/state",
+            json={"state": state},
+            headers={"Content-Type": "application/json"}
+        )
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as e:
+            # Try to extract the error message from the response
+            try:
+                error_detail = resp.json().get("detail", str(e))
+            except Exception:
+                error_detail = str(e)
+            raise RuntimeError(f"Failed to set state: {error_detail}") from e
+        return None
+
+    def get_temperatures(self):
+        """Get all temperature readings from the server."""
+        resp = requests.get(f"{self.base_url}/temperatures")
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_root(self):
+        """Get all data from the root endpoint of the server."""
+        resp = requests.get(f"{self.base_url}/")
+        resp.raise_for_status()
+        return resp.json()
+

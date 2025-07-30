@@ -2,7 +2,7 @@
 import psycopg2
 from datetime import datetime, timezone
 import time
-from fridgeos.statemachine.client import StateMachineClient
+from fridgeos.statemachine import StateMachineClient
 
 
 state_machine_client = StateMachineClient(base_url='http://statemachine:8001')

@@ -18,7 +18,7 @@ import signal
 import sys
 import uvicorn
 from fridgeos.hal import HALServer, HALClient
-from fridgeos.statemachine.server import StateMachineServer
+from fridgeos.statemachine import StateMachineServer
 
 def main():
     print("Starting HAL and StateMachine demo...")
