@@ -90,3 +90,12 @@ to = "sorption_starting"
 criteria = [
     "1K-pump > 40",
 ]
+
+
+[[transitions]]
+from = "warming_up"
+to = "warm"
+criteria = [
+    "40K > 285",
+    "4K > 285",
+]
