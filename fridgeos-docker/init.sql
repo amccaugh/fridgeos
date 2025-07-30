@@ -26,3 +26,29 @@ GRANT SELECT, INSERT ON TABLE temperatures TO fridgeosuser;
 GRANT SELECT, INSERT ON TABLE states TO fridgeosuser;
 GRANT SELECT, INSERT ON TABLE heaters TO fridgeosuser;
 ALTER ROLE fridgeosuser SET statement_timeout = '60s';
+
+-- Performance optimizations
+-- Update statistics more frequently for time-series data
+ALTER TABLE temperatures SET (autovacuum_analyze_scale_factor = 0.02);
+ALTER TABLE heaters SET (autovacuum_analyze_scale_factor = 0.02);
+ALTER TABLE states SET (autovacuum_analyze_scale_factor = 0.1);
+
+-- TimescaleDB specific optimizations
+-- Set chunk time interval to 1 day for better performance
+SELECT set_chunk_time_interval('temperatures', INTERVAL '1 day');
+SELECT set_chunk_time_interval('heaters', INTERVAL '1 day');
+SELECT set_chunk_time_interval('states', INTERVAL '1 day');
+
+-- Enable compression on older data (older than 1 day)
+ALTER TABLE temperatures SET (
+  timescaledb.compress,
+  timescaledb.compress_segmentby = 'sensorname'
+);
+ALTER TABLE heaters SET (
+  timescaledb.compress,
+  timescaledb.compress_segmentby = 'heatername'
+);
+
+-- Auto-compress data older than 1 day
+SELECT add_compression_policy('temperatures', INTERVAL '1 day');
+SELECT add_compression_policy('heaters', INTERVAL '1 day');
