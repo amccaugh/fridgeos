@@ -1,6 +1,8 @@
+- Make easier to select config, with default dummy-config if nothing in /config/
 - Make it possible to set EITHER value or temperature directly for any heater
 - Have HAL return "success" when it does something so we know heaters got set, and statemachine doesn't update heater values unless
 - Allow state machine to be paused (either stop state transitions or state transitions + PID heater control)
+- Optimize postgres number of processors  
 - Fix long Current Temperatures query time
   - "Stat" panel with Calculation = Last non-null value
             SELECT

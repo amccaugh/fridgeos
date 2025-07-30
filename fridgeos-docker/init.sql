@@ -3,6 +3,7 @@ CREATE TABLE temperatures (
     sensorname TEXT NOT NULL,
     temperature REAL NOT NULL);
 SELECT create_hypertable('temperatures', 'time');
+CREATE INDEX ON temperatures (sensorname, time DESC);
 
 CREATE TABLE states (
     time TIMESTAMPTZ NOT NULL,
@@ -14,6 +15,7 @@ CREATE TABLE heaters (
     heatername TEXT NOT NULL,
     value REAL NOT NULL);
 SELECT create_hypertable('heaters', 'time');
+CREATE INDEX ON heaters (heatername, time DESC);
 
 -- Create fridgeosuser
 CREATE USER fridgeosuser WITH PASSWORD 'fridgeos123';

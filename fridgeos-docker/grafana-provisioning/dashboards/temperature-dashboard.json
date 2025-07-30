@@ -153,12 +153,44 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Minutes Ago"
+              "options": "Temperature"
             },
             "properties": [
               {
                 "id": "unit",
-                "value": "min"
+                "value": "kelvin"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "blue",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 2
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 10
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "red",
+                      "value": 100
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -187,7 +219,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  sensorname AS \"Sensor\",\n  ROUND(temperature::numeric, 2) AS \"Temp (K)\"\nFROM temperatures t1\nWHERE time = (\n  SELECT MAX(time) \n  FROM temperatures t2 \n  WHERE t2.sensorname = t1.sensorname\n  AND time > NOW() - INTERVAL '10 MINUTE'\n)\nORDER BY sensorname",
+          "rawSql": "SELECT DISTINCT ON (sensorname)\n  sensorname AS \"Sensor\",\n  ROUND(temperature::numeric, 2) AS \"Temperature\"\nFROM temperatures\nWHERE time > NOW() - INTERVAL '10 MINUTE'\nORDER BY sensorname, time DESC;",
           "refId": "A",
           "select": [
             [
