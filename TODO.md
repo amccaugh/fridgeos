@@ -1,8 +1,6 @@
-- Add statemachine timer to show when things are stale
-- Add simple panel to do "recycle now" and "warm up"
+- Add statemachine timer to show when things are stale, by having integer update_number that database_scraper keeps track of and doesn't push updates if it's the same number
 - Make easier to select config, with default dummy-config if nothing in /config/
 - Make it possible to set EITHER value or temperature directly for any heater
-- Have HAL return "success" when it does something so we know heaters got set, and statemachine doesn't update heater values unless
 - Allow state machine to be paused (either stop state transitions or state transitions + PID heater control)
 
 
