@@ -86,7 +86,7 @@ criteria = [
 
 [[transitions]]
 from = "recycling"
-to = "sorption_starting"
+to = "condensing_helium"
 criteria = [
     "1K-pump > 40",
 ]
