@@ -7,6 +7,9 @@ from fridgeos.statemachine import StateMachineClient
 
 state_machine_client = StateMachineClient(base_url='http://statemachine:8000')
 
+# Keep track of last seen update_num to avoid duplicate uploads
+last_update_num = -1
+
 def get_temperature_data():
     """Get temperature data from StateMachine client"""
     try:
@@ -27,6 +30,15 @@ def get_state_data():
         print(f"Error getting state data: {e}")
         return 'unknown'
 
+def get_info_data():
+    """Get all info data from StateMachine client"""
+    try:
+        info = state_machine_client.get_info()
+        return info
+    except Exception as e:
+        print(f"Error getting info data: {e}")
+        return None
+
 def get_heater_data():
     """Get heater data from StateMachine client"""
     try:
@@ -38,6 +50,18 @@ def get_heater_data():
     except Exception as e:
         print(f"Error getting heater data: {e}")
         return {}
+
+def is_data_new(info_data):
+    """Check if the info data is new based on update_num"""
+    global last_update_num
+    if info_data is None:
+        return False
+    
+    current_update_num = info_data.get('update_num', 0)
+    if current_update_num > last_update_num:
+        last_update_num = current_update_num
+        return True
+    return False
 
 def upload_temperatures_to_postgres(temperatures):
     """Upload temperature data to postgres temperatures table"""
@@ -139,13 +163,28 @@ def upload_heaters_to_postgres(heaters):
 
 if __name__ == "__main__":
     while True:
-        temperatures = get_temperature_data()
-        upload_temperatures_to_postgres(temperatures)
+        # Get info data to check if update is new
+        info_data = get_info_data()
         
-        state = get_state_data()
-        upload_state_to_postgres(state)
-        
-        heaters = get_heater_data()
-        upload_heaters_to_postgres(heaters)
+        if is_data_new(info_data):
+            print(f"New data detected (update_num: {info_data.get('update_num', 'unknown')})")
+            
+            # Extract data from info response
+            temperatures = info_data.get('current_temperatures', {})
+            # Remove any temperature entries where the value is None
+            temperatures = {k: v for k, v in temperatures.items() if v is not None}
+            upload_temperatures_to_postgres(temperatures)
+            
+            # Extract state from info response
+            state = info_data.get('current_state', 'unknown')
+            upload_state_to_postgres(state)
+            
+            # Extract heater values from info response
+            heaters = info_data.get('current_heater_values', {})
+            # Remove any heater entries where the value is None
+            heaters = {k: v for k, v in heaters.items() if v is not None}
+            upload_heaters_to_postgres(heaters)
+        else:
+            print("No new data, skipping upload")
         
         time.sleep(1)

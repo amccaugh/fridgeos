@@ -57,6 +57,7 @@ class StateMachineServer:
         self.current_heater_values = {}
         self.last_temperature_update = time.time()
         self.last_temperature_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.update_num = 0  # Counter for HAL updates
         self.state_machine_thread: Optional[threading.Thread] = None
         
         self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
@@ -129,7 +130,8 @@ class StateMachineServer:
                     "current_heater_values": self.current_heater_values,
                     "current_state_target_temperatures": self.states[self.current_state],
                     "last_temperature_update": round(time.time() - self.last_temperature_update, 1),
-                    "last_temperature_update_datetime": self.last_temperature_update_datetime
+                    "last_temperature_update_datetime": self.last_temperature_update_datetime,
+                    "update_num": self.update_num
                 }
             except Exception as e:
                 self.logger.error(f'Error getting state info: {e}')
@@ -463,6 +465,7 @@ class StateMachineServer:
         # Get temperatures from HAL Client
         self.current_temperatures = self.hal_client.get_temperatures()
         self.last_temperature_update = time.time()
+        self.last_temperature_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.debug(f"Current temperatures: {self.current_temperatures}")
         
         # Get current heater values from HAL Client
@@ -473,6 +476,9 @@ class StateMachineServer:
             self.current_heater_values.update(hal_heater_values)
         except Exception as e:
             self.logger.error(f"Error getting heater values from HAL: {e}")
+        
+        # Increment update counter after successful HAL communication
+        self.update_num += 1
         
         # Update each heater based on its type
         for heater_name, heater_config in self.heaters.items():
@@ -561,6 +567,12 @@ class StateMachineClient:
     def get_heaters(self):
         """Get all heater values from the server."""
         resp = requests.get(f"{self.base_url}/heaters")
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_info(self):
+        """Get all info data from the server."""
+        resp = requests.get(f"{self.base_url}/info")
         resp.raise_for_status()
         return resp.json()
 
