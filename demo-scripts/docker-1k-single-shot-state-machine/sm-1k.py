@@ -13,4 +13,4 @@ sm_settings_toml = './config/single_shot_1k_sm_config.toml'
 sm = Single_shot_1k(settings_toml = sm_settings_toml, 
              hal_client = sm_hal_client, 
              monitor_client = sm_monitor_client)
-sm.non_async__turn_on_state_machine()
+sm.turn_on_state_machine()

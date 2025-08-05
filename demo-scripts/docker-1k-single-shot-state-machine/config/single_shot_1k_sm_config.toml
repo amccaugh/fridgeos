@@ -27,7 +27,7 @@ heaters = {'4PUMP' = {pid_set_value = 0, elapse_time_max = 10}}
 relays = {} 
 
 [turn_on_heat_switch_4]
-temperature_thresholds = {'4HEAD'= 0.875}
+temperature_thresholds = {'4HEAD'= 0.900}
 heaters = {}
 relays = {'4SWITCH' = {pid_set_value = 22, elapse_time_max = 5400}}
 
