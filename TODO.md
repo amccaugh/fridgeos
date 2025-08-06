@@ -1,3 +1,4 @@
+- Add name to state machine, put name in title of :8000 control stuff
 - Make example-configs/ folder
 - Add configs/ to gitignore and remove past tracked files
 - Make it possible to set EITHER value (4) or temperature ("4K") directly for any heater
