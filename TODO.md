@@ -1,7 +1,6 @@
-- Add statemachine timer to show when things are stale, by having integer update_number that database_scraper keeps track of and doesn't push updates if it's the same number
-- Make easier to select config, with default dummy-config if nothing in /config/
-- Make it possible to set EITHER value or temperature directly for any heater
-- Allow state machine to be paused (either stop state transitions or state transitions + PID heater control)
+- Make example-configs/ folder
+- Add configs/ to gitignore and remove past tracked files
+- Make it possible to set EITHER value (4) or temperature ("4K") directly for any heater
 
 
 Optional:
