@@ -3,7 +3,7 @@ import numpy as np
 from serial import Serial
 import json
 
-class Lockin():
+class SwarmLockin():
     def __init__(self, address, calibration_file = None, name = None, mux = False):
         try:
             self.serial = Serial(address)
@@ -88,7 +88,7 @@ class Lockin():
         command = 'RATE'
         response = self.mux_check(mux_true_command= f'{command} {self.name}', mux_false_command = f'{command}')
         return response  
-class Diode(object):
+class SwarmDiode(object):
     def __init__(self, address, calibration_file = None, name = None):
         try:
             self.serial = Serial(address, timeout=5)
@@ -144,7 +144,8 @@ class Diode(object):
             return input_data
         else:
             return np.interp(input_data, self.calibration_array[:,1], self.calibration_array[:,0])
-class PumpHeater(object):
+
+class SwarmHighPowerHeater(object):
     def __init__(self, address, name = None):
         try:
             self.serial = Serial(address,timeout=5)
@@ -221,7 +222,7 @@ class PumpHeater(object):
         command = 'HPH_EN'
         return self.name_check(name_true_command = f'{command} {self.name} {enabled}' , name_false_command = f'{command} {enabled}')
 
-class HeatSwitch(object):
+class SwarmLowPowerHeater(object):
     def __init__(self, address,name):
         try:
             self.serial = Serial(address)

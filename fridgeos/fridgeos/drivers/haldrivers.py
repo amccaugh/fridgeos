@@ -13,7 +13,7 @@
 from fridgeos.drivers.korad_kd3005p import KD3005P
 from fridgeos.drivers.srs_sim921 import SIM921
 from fridgeos.drivers.srs_sim922 import SIM922
-from fridgeos.drivers.swarm import Lockin, Diode, PumpHeater, HeatSwitch, WarmupHeater
+from fridgeos.drivers.swarm import SwarmLockin, SwarmDiode, SwarmHighPowerHeater, SwarmLowPowerHeater, WarmupHeater
 from fridgeos.drivers.dummy import DummyThermometer, DummyHeater
 import random
 import time
@@ -30,19 +30,19 @@ class HAL_KD3005P():
     def get_heater_value(self):
         return self.heater.read_voltage()
     
-class SWARM_HPH():
+class HAL_SwarmHighPowerHeater():
     def setup(self, address, mux_name = None):
-        self.heater = PumpHeater(address, mux_name)
+        self.heater = SwarmHighPowerHeater(address, mux_name)
 
     def set_heater_value(self, value):
         self.heater.set_pump_current(value)
 
     def get_heater_value(self):
-        return self.heater.get_pump_measurement()
+        return self.heater.get_pump_measurement().get('v')
     
-class SWARM_LPH():
+class HAL_SwarmLowPowerHeater():
     def setup(self, address, mux_name):
-        self.heater = HeatSwitch(address, mux_name)
+        self.heater = SwarmLowPowerHeater(address, mux_name)
 
     def set_heater_value(self, value):
         self.heater.set_heat_switch_voltage(value)
@@ -56,7 +56,7 @@ class SWARM_LPH():
     def get_heater_value(self):
         return self.heater.get_heat_switch_voltage()
 
-class DummyHeater_HAL():
+class HAL_DummyHeater():
     def setup(self, address):
         self.heater = DummyHeater(address)
     
@@ -67,7 +67,7 @@ class DummyHeater_HAL():
         return self.heater.get_voltage()
 
 
-class FaultyDummyHeater_HAL():
+class HAL_FaultyDummyHeater():
     def setup(self, address):
         self.heater = DummyHeater(address)
     
@@ -96,28 +96,28 @@ class HAL_SIM922():
     def get_temperature(self):
         return self.thermometer.read_temperature()
     
-class SWARM_LOCKIN():
+class HAL_SwarmLockin():
     def setup(self, address, calibration_file = None, mux_name = None, mux = False):
-        self.thermometer = Lockin(address, calibration_file, mux_name, mux)
+        self.thermometer = SwarmLockin(address, calibration_file, mux_name, mux)
 
     def get_temperature(self):
         return self.thermometer.read_temp()
     
-class SWARM_DIODE():
+class HAL_SwarmDiode():
     def setup(self, address, calibration_file = None, mux_name = None):
-        self.thermometer = Diode(address, calibration_file, mux_name)
+        self.thermometer = SwarmDiode(address, calibration_file, mux_name)
 
     def get_temperature(self):
         return self.thermometer.read_temp()
 
-class DummyThermometer_HAL():
+class HAL_DummyThermometer():
     def setup(self, address):
         self.thermometer = DummyThermometer(address)
     
     def get_temperature(self):
         return self.thermometer.read_temperature()
 
-class FaultyDummyThermometer_HAL():
+class HAL_FaultyDummyThermometer():
     def setup(self, address):
         self.thermometer = DummyThermometer(address)
     
@@ -129,7 +129,7 @@ class FaultyDummyThermometer_HAL():
 
 
 
-class LaggyDummyThermometer_HAL():
+class HAL_LaggyDummyThermometer():
     def setup(self, address):
         self.thermometer = DummyThermometer(address)
     
@@ -141,13 +141,13 @@ hal_classes = {
     'korad-kd3005p': HAL_KD3005P,
     'srs-sim921': HAL_SIM921,
     'srs-sim922': HAL_SIM922,
-    'swarm_lockin': SWARM_LOCKIN,
-    'swarm_diode': SWARM_DIODE,
-    'swarm_hph': SWARM_HPH,
-    'swarm_lph': SWARM_LPH,
-    'DummyThermometer': DummyThermometer_HAL,
-    'DummyHeater': DummyHeater_HAL,
-    'FaultyDummyHeater': FaultyDummyHeater_HAL,
-    'FaultyDummyThermometer': FaultyDummyThermometer_HAL,
-    'LaggyDummyThermometer': LaggyDummyThermometer_HAL,
+    'swarm_lockin': HAL_SwarmLockin,
+    'swarm_diode': HAL_SwarmDiode,
+    'swarm_hph': HAL_SwarmHighPowerHeater,
+    'swarm_lph': HAL_SwarmLowPowerHeater,
+    'DummyThermometer': HAL_DummyThermometer,
+    'DummyHeater': HAL_DummyHeater,
+    'FaultyDummyHeater': HAL_FaultyDummyHeater,
+    'FaultyDummyThermometer': HAL_FaultyDummyThermometer,
+    'LaggyDummyThermometer': HAL_LaggyDummyThermometer,
 }
