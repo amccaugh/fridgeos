@@ -89,3 +89,6 @@ target/
 *.oas
 
 .vscode/
+
+# Configuration files
+fridgeos-docker/config/*
