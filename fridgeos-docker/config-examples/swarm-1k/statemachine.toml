@@ -1,4 +1,5 @@
 [settings]
+fridge_name = "swarm-1k"
 polling_interval = 3.0    # How often to read temperatures from the HAL
 
 [constants]  # Values that can be used as criteria for transitions

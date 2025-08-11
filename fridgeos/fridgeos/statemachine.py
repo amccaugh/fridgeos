@@ -103,17 +103,27 @@ class StateMachineServer:
     def _setup_routes(self):
         @self.app.get("/", response_class=HTMLResponse)
         async def root():
-            return """
-            <h2>FridgeOS State Machine Server</h2>
-            <ul>
-                <li><a href="/info">Server Info</a> - Detailed status and configuration</li>
-                <li><a href="/control">State Control</a> - Change system state</li>
-                <li><a href="/temperatures">Temperatures</a> - Current temperature readings</li>
-                <li><a href="/heaters">Heaters</a> - Current heater values</li>
-                <li><a href="/state">Current State</a> - Current state info only</li>
-                <li><a href="/statelist">Available States</a> - List of all possible states</li>
-                <li><a href="/health">Health Check</a> - Simple health status</li>
-            </ul>
+            fridge_name = self.settings.get('fridge_name', 'FridgeOS')
+            return f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>{fridge_name} FridgeOS State Machine</title>
+            </head>
+            <body>
+                <h2>FridgeOS State Machine Server</h2>
+                <p>Fridge name: {fridge_name}</p>
+                <ul>
+                    <li><a href="/info">Server Info</a> - Detailed status and configuration</li>
+                    <li><a href="/control">State Control</a> - Change system state</li>
+                    <li><a href="/temperatures">Temperatures</a> - Current temperature readings</li>
+                    <li><a href="/heaters">Heaters</a> - Current heater values</li>
+                    <li><a href="/state">Current State</a> - Current state info only</li>
+                    <li><a href="/statelist">Available States</a> - List of all possible states</li>
+                    <li><a href="/health">Health Check</a> - Simple health status</li>
+                </ul>
+            </body>
+            </html>
             """
 
         @self.app.get("/info")
@@ -200,31 +210,57 @@ class StateMachineServer:
 
         @self.app.get("/control", response_class=HTMLResponse)
         async def control_page():
+            fridge_name = self.settings.get('fridge_name', 'FridgeOS')
             state_links = "".join([
                 f'<li><a href="/control/{state}">{state}</a></li>' 
                 for state in self.states.keys()
             ])
             return f"""
-            <h3>FridgeOS State Control</h3>
-            <p>Current state: <strong>{self.current_state}</strong></p>
-            <p>Available states (click to change to new state):</p>
-            <ul>
-                {state_links}
-            </ul>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>{fridge_name} FridgeOS State Machine</title>
+            </head>
+            <body>
+                <h3>FridgeOS State Control</h3>
+                <p>Current state: <strong>{self.current_state}</strong></p>
+                <p>Available states (click to change to new state):</p>
+                <ul>
+                    {state_links}
+                </ul>
+            </body>
+            </html>
             """
 
         @self.app.get("/control/{state}")
         async def set_state_link(state: str):
+            fridge_name = self.settings.get('fridge_name', 'FridgeOS')
             result = self.make_transition(state)
             if result:
                 return HTMLResponse(f"""
-                <p>State changed to <strong>{state}</strong></p>
-                <p><a href="/control">← Back to control page</a></p>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <p>State changed to <strong>{state}</strong></p>
+                    <p><a href="/control">← Back to control page</a></p>
+                </body>
+                </html>
                 """)
             else:
                 return HTMLResponse(f"""
-                <p>Error: Invalid state <strong>{state}</strong></p>
-                <p><a href="/control">← Back to control page</a></p>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <p>Error: Invalid state <strong>{state}</strong></p>
+                    <p><a href="/control">← Back to control page</a></p>
+                </body>
+                </html>
                 """)
     
     def start_server(self):
