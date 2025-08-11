@@ -65,8 +65,7 @@ criteria = [
 from = "condensing_helium"
 to = "sorption_starting"
 criteria = [
-    "1K < 4.75",
-    "4K < 4.75",
+    "1K < 3.25",
 ]
 
 [[transitions]]
