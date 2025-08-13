@@ -1,4 +1,3 @@
-- Add name to state machine, put name in title of :8000 control stuff
 - Make it possible to set EITHER value (4) or temperature ("4K") directly for any heater
 - Make state machine require you to type in fridge name
 - Make proper non-admin grafana user
