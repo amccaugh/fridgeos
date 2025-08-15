@@ -444,14 +444,23 @@ class StateMachineServer:
             for crit in t.get('criteria', []):
                 # Parse criterion with constants support
                 criteria_list.append(self._parse_criterion(crit, constants))
+            
+            # Handle both single string and list of "from" states
+            from_states = t['from']
+            if isinstance(from_states, str):
+                from_states = [from_states]  # Convert single string to list
+            
             parsed.append({
-                'from': t['from'],
+                'from': from_states,
                 'to': t['to'],
                 'criteria': criteria_list
             })
+            
+            # Handle timeouts for multiple from states
             if t.get('max_seconds') is not None:
-                state_timeouts[(t['from'], t['to'])] = t['max_seconds']
-                self.logger.debug(f"Added timeout for {t['from']} -> {t['to']}: {t['max_seconds']}s")
+                for from_state in from_states:
+                    state_timeouts[(from_state, t['to'])] = t['max_seconds']
+                    self.logger.debug(f"Added timeout for {from_state} -> {t['to']}: {t['max_seconds']}s")
         
         self.logger.info(f"Loaded {len(parsed)} transitions")
         return parsed, state_timeouts
@@ -586,16 +595,16 @@ class StateMachineServer:
         """ Check if any transition criteria are met or if any timeout is exceeded. """
         now = time.time()
         for t in self.criteria:
-            if t['from'] == self.current_state:
+            if self.current_state in t['from']:
                 self.logger.debug(f'Checking transition: {self.current_state}->{t["to"]}')
-                timeout = self.state_timeouts.get((t['from'], t['to']))
+                timeout = self.state_timeouts.get((self.current_state, t['to']))
                 # Check if all criteria are met
                 if all(self._check_criterion(c) for c in t['criteria']):
-                    self.logger.info(f'Transition criteria met for {t["from"]} to {t["to"]}')
+                    self.logger.info(f'Transition criteria met for {self.current_state} to {t["to"]}')
                     return t
                 # Check if timeout is exceeded
                 if timeout is not None and now - self.state_entry_time > timeout:
-                    self.logger.info(f'Transition timeout exceeded for {t["from"]} to {t["to"]} after {timeout}s')
+                    self.logger.info(f'Transition timeout exceeded for {self.current_state} to {t["to"]} after {timeout}s')
                     return t
         return None
 

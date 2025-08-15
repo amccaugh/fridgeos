@@ -1,6 +1,7 @@
 [settings]
 fridge_name = "hpd"
 polling_interval = 3.0    # How often to read temperatures from the HAL
+state_change_password = "hpd"
 
 [constants]  # Values that can be used as criteria for transitions
 switch_high_value = 4
@@ -58,7 +59,8 @@ from = "warm"
 to = "condensing_helium"
 criteria = [
     "1K-pump < 50",
-    "4K < 15",
+    "4K < 5",
+    "1K-main-plate < 5",
     "1K > 2",
 ]
 
@@ -93,7 +95,7 @@ criteria = [
 
 
 [[transitions]]
-from = "warming_up"
+from = ["warming_up", "cold", "condensing_helium", "recycling", "sorption_starting"]
 to = "warm"
 criteria = [
     "40K > 285",
