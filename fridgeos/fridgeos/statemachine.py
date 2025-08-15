@@ -16,6 +16,7 @@ import requests
 
 class StateChangeRequest(BaseModel):
     state: str
+    password: Optional[str] = None
 
 
 class DummyHalClient:
@@ -40,6 +41,9 @@ class StateMachineServer:
         # Load constants and settings
         self.constants = self._load_constants(config_path)
         self.settings = self._load_settings(config_path)
+        
+        # Load password from settings if configured
+        self.required_password = self.settings.get('state_change_password')
         
         self.criteria, self.state_timeouts = self._load_transitions(config_path)
         self.heaters = self._load_heaters(config_path)
@@ -99,6 +103,16 @@ class StateMachineServer:
             self.state_machine_thread = threading.Thread(target=self.run, daemon=True)
             self.state_machine_thread.start()
             self.logger.info('State machine started automatically')
+    
+    def _validate_password(self, provided_password: Optional[str]) -> bool:
+        """Validate the provided password against the configured password."""
+        if self.required_password is None:
+            # No password required
+            return True
+        if provided_password is None:
+            # Password required but not provided
+            return False
+        return provided_password == self.required_password
     
     def _setup_routes(self):
         @self.app.get("/", response_class=HTMLResponse)
@@ -162,8 +176,17 @@ class StateMachineServer:
         @self.app.put("/state")
         async def set_state(request: StateChangeRequest):
             try:
+                # Validate password if required
+                if not self._validate_password(request.password):
+                    self.logger.warning(f"Invalid password provided for state change to {request.state}")
+                    raise HTTPException(
+                        status_code=401, 
+                        detail="Invalid or missing password required for state changes"
+                    )
+                
                 result = self.make_transition(request.state)
                 if result:
+                    self.logger.info(f"State changed to {request.state} via API")
                     return {
                         "success": True,
                         "message": f"State changed to {request.state}",
@@ -175,6 +198,8 @@ class StateMachineServer:
                         status_code=400, 
                         detail=f"Invalid state: {request.state}. Valid states: {list(self.states.keys())}"
                     )
+            except HTTPException:
+                raise
             except Exception as e:
                 self.logger.error(f'Error changing state to {request.state}: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
@@ -211,32 +236,81 @@ class StateMachineServer:
         @self.app.get("/control", response_class=HTMLResponse)
         async def control_page():
             fridge_name = self.settings.get('fridge_name', 'FridgeOS')
-            state_links = "".join([
-                f'<li><a href="/control/{state}">{state}</a></li>' 
-                for state in self.states.keys()
-            ])
-            return f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>{fridge_name} FridgeOS State Machine</title>
-            </head>
-            <body>
-                <h3>FridgeOS State Control</h3>
-                <p>Current state: <strong>{self.current_state}</strong></p>
-                <p>Available states (click to change to new state):</p>
-                <ul>
-                    {state_links}
-                </ul>
-            </body>
-            </html>
-            """
+            
+            if self.required_password:
+                # Show form-based control when password is required
+                state_options = "".join([
+                    f'<option value="{state}">{state}</option>' 
+                    for state in self.states.keys()
+                ])
+                return f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <h3>FridgeOS State Control</h3>
+                    <p>Current state: <strong>{self.current_state}</strong></p>
+                    <p>Password required for state changes.</p>
+                    <form action="/control/set" method="post">
+                        <label for="state">New State:</label>
+                        <select name="state" id="state" required>
+                            {state_options}
+                        </select><br><br>
+                        <label for="password">Password:</label>
+                        <input type="password" name="password" id="password" required><br><br>
+                        <input type="submit" value="Change State">
+                    </form>
+                </body>
+                </html>
+                """
+            else:
+                # Show link-based control when no password is required
+                state_links = "".join([
+                    f'<li><a href="/control/{state}">{state}</a></li>' 
+                    for state in self.states.keys()
+                ])
+                return f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <h3>FridgeOS State Control</h3>
+                    <p>Current state: <strong>{self.current_state}</strong></p>
+                    <p>Available states (click to change to new state):</p>
+                    <ul>
+                        {state_links}
+                    </ul>
+                </body>
+                </html>
+                """
 
-        @self.app.get("/control/{state}")
-        async def set_state_link(state: str):
+        @self.app.post("/control/set")
+        async def set_state_form(state: str = Form(...), password: str = Form(...)):
             fridge_name = self.settings.get('fridge_name', 'FridgeOS')
+            
+            # Validate password if required
+            if not self._validate_password(password):
+                self.logger.warning(f"Invalid password provided for state change to {state} via web form")
+                return HTMLResponse(f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <p>Error: Invalid password</p>
+                    <p><a href="/control">← Back to control page</a></p>
+                </body>
+                </html>
+                """, status_code=401)
+            
             result = self.make_transition(state)
             if result:
+                self.logger.info(f"State changed to {state} via web form")
                 return HTMLResponse(f"""
                 <!DOCTYPE html>
                 <html>
@@ -261,7 +335,54 @@ class StateMachineServer:
                     <p><a href="/control">← Back to control page</a></p>
                 </body>
                 </html>
+                """, status_code=400)
+
+        @self.app.get("/control/{state}")
+        async def set_state_link(state: str):
+            fridge_name = self.settings.get('fridge_name', 'FridgeOS')
+            
+            # If password is required, don't allow direct link access
+            if self.required_password:
+                return HTMLResponse(f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <p>Error: Password required for state changes. Please use the <a href="/control">control form</a>.</p>
+                </body>
+                </html>
+                """, status_code=401)
+            
+            result = self.make_transition(state)
+            if result:
+                self.logger.info(f"State changed to {state} via web link")
+                return HTMLResponse(f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <p>State changed to <strong>{state}</strong></p>
+                    <p><a href="/control">← Back to control page</a></p>
+                </body>
+                </html>
                 """)
+            else:
+                return HTMLResponse(f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>{fridge_name} FridgeOS State Machine</title>
+                </head>
+                <body>
+                    <p>Error: Invalid state <strong>{state}</strong></p>
+                    <p><a href="/control">← Back to control page</a></p>
+                </body>
+                </html>
+                """, status_code=400)
     
     def start_server(self):
         """Start the FastAPI server in a separate thread"""
@@ -570,11 +691,15 @@ class StateMachineClient:
         data = resp.json()
         return data["current_state"]
 
-    def set_state(self, state):
+    def set_state(self, state, password=None):
         """Set the state on the server. Returns None if successful, raises an error if not."""
+        request_data = {"state": state}
+        if password is not None:
+            request_data["password"] = password
+            
         resp = requests.put(
             f"{self.base_url}/state",
-            json={"state": state},
+            json=request_data,
             headers={"Content-Type": "application/json"}
         )
         try:
