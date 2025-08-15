@@ -130,6 +130,7 @@ class StateMachineServer:
                 <ul>
                     <li><a href="/info">Server Info</a> - Detailed status and configuration</li>
                     <li><a href="/control">State Control</a> - Change system state</li>
+                    <li><a href="/heater/set">Heater Control</a> - Change heater values</li>
                     <li><a href="/temperatures">Temperatures</a> - Current temperature readings</li>
                     <li><a href="/heaters">Heaters</a> - Current heater values</li>
                     <li><a href="/state">Current State</a> - Current state info only</li>
@@ -271,6 +272,96 @@ class StateMachineServer:
             except Exception as e:
                 self.logger.error(f'Error resuming system: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.post("/heater/set")
+        async def set_heater_value_endpoint(heater_name: str = Form(...), value: str = Form(...)):
+            """
+            Set a heater to a specific value directly.
+            """
+            try:
+                if heater_name is None or value is None:
+                    raise HTTPException(status_code=400, detail="Missing heater_name or value")
+                
+                try:
+                    value_float = float(value)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail="Value must be a number")
+                
+                result = self.set_heater_value(heater_name, value_float)
+                if result:
+                    return HTMLResponse(f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Heater Set Successfully</title>
+                        <style>
+                            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                            .success {{ color: green; font-weight: bold; }}
+                            .back-link {{ margin-top: 20px; }}
+                        </style>
+                    </head>
+                    <body>
+                        <h2 class="success">✓ Heater {heater_name} set to {value_float}</h2>
+                        <div class="back-link">
+                            <a href="/heater/set">← Back to Heater Control</a> | 
+                            <a href="/">← Back to Main Page</a>
+                        </div>
+                    </body>
+                    </html>
+                    """)
+                else:
+                    raise HTTPException(status_code=400, detail=f"Failed to set heater {heater_name}")
+            except HTTPException:
+                raise
+            except Exception as e:
+                self.logger.error(f'Error setting heater value: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.get("/heater/set", response_class=HTMLResponse)
+        async def heater_control_page():
+            """
+            Web interface for setting heater values.
+            """
+            fridge_name = self.settings.get('fridge_name', 'FridgeOS')
+            
+            # Create form for each heater
+            heater_forms = ""
+            for heater_name in self.heaters.keys():
+                current_value = self.current_heater_values.get(heater_name, 0)
+                heater_forms += f"""
+                <div style="margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+                    <h4>Heater: {heater_name}</h4>
+                    <p>Current value: {current_value}</p>
+                    <form action="/heater/set" method="post">
+                        <input type="hidden" name="heater_name" value="{heater_name}">
+                        <label for="value_{heater_name}">New Value:</label>
+                        <input type="number" step="0.1" name="value" id="value_{heater_name}" required>
+                        <input type="submit" value="Set Value">
+                    </form>
+                </div>
+                """
+            
+            return f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>{fridge_name} Heater Control</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                    .heater-form {{ margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }}
+                    input[type="number"] {{ width: 100px; margin: 0 10px; }}
+                    input[type="submit"] {{ background: #007cba; color: white; padding: 5px 15px; border: none; border-radius: 3px; cursor: pointer; }}
+                    input[type="submit"]:hover {{ background: #005a87; }}
+                </style>
+            </head>
+            <body>
+                <h2>Heater Control</h2>
+                <p><a href="/">← Back to main page</a></p>
+                <p>Set individual heater values directly:</p>
+                {heater_forms}
+            </body>
+            </html>
+            """
 
         @self.app.get("/control", response_class=HTMLResponse)
         async def control_page():
@@ -713,6 +804,24 @@ class StateMachineServer:
         
         self.logger.info(f'Resuming system from PAUSED to {target_state}')
         return self.make_transition(target_state)
+    
+    def set_heater_value(self, heater_name: str, value: float):
+        """ Set a heater to a specific value directly. """
+        if heater_name not in self.heaters:
+            self.logger.error(f"Heater '{heater_name}' not found")
+            return False
+        
+        heater_config = self.heaters[heater_name]
+        
+        # Set the value directly via HAL
+        try:
+            self.hal_client.set_heater_value(heater_name, value)
+            self.current_heater_values[heater_name] = value
+            self.logger.info(f"Set heater '{heater_name}' to {value}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error setting heater '{heater_name}' to {value}: {e}")
+            return False
 
     def update_heaters(self):
         # Get temperatures from HAL Client
