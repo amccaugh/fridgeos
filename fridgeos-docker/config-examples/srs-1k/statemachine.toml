@@ -22,7 +22,7 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 
 [states.warm]
 1K-pump = 0
-1K-switch = 0
+1K-switch = 4
 [states.warming_up]
 1K-pump = 250
 1K-switch = 0
@@ -56,12 +56,18 @@ criteria = [
 
 [[transitions]]
 from = "warm"
+to = "recycling"
+criteria = [
+    "1K-pump < 6",
+    "4K < 6",
+    "1K-main-plate < 6",
+]
+
+[[transitions]]
+from = "recycling"
 to = "condensing_helium"
 criteria = [
-    "1K-pump < 50",
-    "4K < 5",
-    "1K-main-plate < 5",
-    "1K > 2",
+    "1K-pump > 40",
 ]
 
 [[transitions]]
@@ -84,13 +90,6 @@ from = "cold"
 to = "recycling"
 criteria = [
     "1K > 2",
-]
-
-[[transitions]]
-from = "recycling"
-to = "condensing_helium"
-criteria = [
-    "1K-pump > 40",
 ]
 
 
