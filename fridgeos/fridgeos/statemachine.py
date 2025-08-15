@@ -233,6 +233,45 @@ class StateMachineServer:
                 self.logger.error(f'Error getting heater values: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
 
+        @self.app.post("/pause")
+        async def pause_system_endpoint():
+            """
+            Pause the system by transitioning to PAUSED state.
+            """
+            try:
+                result = self.pause_system()
+                if result:
+                    return {
+                        "success": True,
+                        "message": "System paused successfully",
+                        "current_state": self.current_state
+                    }
+                else:
+                    raise HTTPException(status_code=400, detail="Failed to pause system")
+            except Exception as e:
+                self.logger.error(f'Error pausing system: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.post("/resume")
+        async def resume_system_endpoint(request: dict):
+            """
+            Resume the system from PAUSED state to a target state.
+            """
+            try:
+                target_state = request.get('target_state')
+                result = self.resume_system(target_state)
+                if result:
+                    return {
+                        "success": True,
+                        "message": f"System resumed to {self.current_state}",
+                        "current_state": self.current_state
+                    }
+                else:
+                    raise HTTPException(status_code=400, detail="Failed to resume system")
+            except Exception as e:
+                self.logger.error(f'Error resuming system: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+
         @self.app.get("/control", response_class=HTMLResponse)
         async def control_page():
             fridge_name = self.settings.get('fridge_name', 'FridgeOS')
@@ -544,13 +583,23 @@ class StateMachineServer:
             parsed_states[state_name] = parsed_state
             self.logger.debug(f"Loaded state {state_name}: {parsed_state}")
         
-        self.logger.info(f"Loaded {len(parsed_states)} states")
+        # Automatically add PAUSED state that prevents heaters from being activated
+        parsed_states['PAUSED'] = {}
+        self.logger.info(f"Automatically added PAUSED state")
+        
+        self.logger.info(f"Loaded {len(parsed_states)} states (including automatic PAUSED state)")
         return parsed_states
         
     def update_heater_setpoints(self, new_state):
         self.logger.info(f"Updating heater setpoints for state: {new_state}")
         state_config = self.states[new_state]
         
+        # Special handling for PAUSED state - don't update heater setpoints
+        if new_state == 'PAUSED':
+            self.logger.info('PAUSED state activated - heaters will not be updated')
+            return
+        
+        # Normal state processing
         for heater_name, heater_config in self.heaters.items():
             if heater_config['pid']:
                 # PID heaters need thermometer setpoints
@@ -594,6 +643,12 @@ class StateMachineServer:
     def check_transitions(self):
         """ Check if any transition criteria are met or if any timeout is exceeded. """
         now = time.time()
+        
+        # Special handling for PAUSED state - only allow manual transitions
+        if self.current_state == 'PAUSED':
+            self.logger.debug('PAUSED state - no automatic transitions allowed')
+            return None
+        
         for t in self.criteria:
             if self.current_state in t['from']:
                 self.logger.debug(f'Checking transition: {self.current_state}->{t["to"]}')
@@ -626,6 +681,38 @@ class StateMachineServer:
         self.state_entry_time = time.time()
         self.update_heater_setpoints(new_state)
         return True
+    
+    def pause_system(self):
+        """ Pause the system by transitioning to PAUSED state. """
+        if self.current_state == 'PAUSED':
+            self.logger.info('System is already paused')
+            return True
+        self.logger.info('Pausing system - transitioning to PAUSED state')
+        return self.make_transition('PAUSED')
+    
+    def resume_system(self, target_state=None):
+        """ Resume the system from PAUSED state to a target state or the previous state. """
+        if self.current_state != 'PAUSED':
+            self.logger.info('System is not paused')
+            return False
+        
+        if target_state is None:
+            # If no target state specified, try to resume to a safe default
+            # Look for a state that's not PAUSED and has reasonable heater values
+            safe_states = [state for state in self.states.keys() if state != 'PAUSED']
+            if safe_states:
+                target_state = safe_states[0]  # Use first available state as default
+                self.logger.info(f'No target state specified, resuming to default: {target_state}')
+            else:
+                self.logger.error('No safe states available to resume to')
+                return False
+        
+        if target_state not in self.states:
+            self.logger.error(f"Invalid target state for resume: '{target_state}'. Valid states: {list(self.states.keys())}")
+            return False
+        
+        self.logger.info(f'Resuming system from PAUSED to {target_state}')
+        return self.make_transition(target_state)
 
     def update_heaters(self):
         # Get temperatures from HAL Client
@@ -645,6 +732,11 @@ class StateMachineServer:
         
         # Increment update counter after successful HAL communication
         self.update_num += 1
+        
+        # Skip heater updates if system is paused
+        if self.current_state == 'PAUSED':
+            self.logger.debug('PAUSED state - skipping heater updates')
+            return
         
         # Update each heater based on its type
         for heater_name, heater_config in self.heaters.items():
