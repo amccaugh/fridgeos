@@ -1,0 +1,133 @@
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: fridgedb
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: grafana123
+      FRIDGEOS_PASSWORD: fridgeos123
+      # Performance optimizations
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_CHECKPOINT_COMPLETION_TARGET: 0.9
+      POSTGRES_WAL_BUFFERS: 16MB
+      POSTGRES_DEFAULT_STATISTICS_TARGET: 100
+      POSTGRES_RANDOM_PAGE_COST: 1.1
+      POSTGRES_EFFECTIVE_IO_CONCURRENCY: 200
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grafana -d fridgedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-app
+    environment:
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres:5432
+      - GF_DATABASE_NAME=fridgedb
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=grafana123
+      - GF_DATABASE_SSL_MODE=disable
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  hal:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: hal-server
+    privileged: true
+    volumes:
+      - ./logs:/app/logs/
+      - /dev/serial:/dev/serial
+      - ../fridgeos:/app/fridgeos-src:ro
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+    working_dir: /app
+    command: python scripts/hal-server.py
+    ports:
+      - "8001:8001"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  statemachine:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: statemachine-server
+    volumes:
+      - ./logs:/app/logs/
+      - ../fridgeos:/app/fridgeos-src:ro
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+    working_dir: /app
+    command: python scripts/statemachine-server.py
+    ports:
+      - "8000:8000"
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+    depends_on:
+      hal:
+        condition: service_healthy
+
+
+  database-scraper:
+    build:
+      context: ..
+      dockerfile: fridgeos-docker/Dockerfile
+    container_name: database-scraper
+    volumes:
+      - ./logs:/app/logs/
+      - ../fridgeos:/app/fridgeos-src:ro
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+    working_dir: /app
+    command: python scripts/database-scraper.py
+    networks:
+      - fridgeos-network
+    restart: unless-stopped
+    stop_grace_period: 1s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  fridgeos-network:
+    driver: bridge

@@ -1,0 +1,74 @@
+[settings]
+fridge_name = "dummy"
+polling_interval = 1.0    # How often to read temperatures from the HAL
+
+[constants]  # Values that can be used as criteria for transitions
+T_switch_high = 20
+
+
+[thermometers.pump]
+corresponding_heater = "PUMPHEATER"
+coefficients = {P = 10, I = 1, D = 0, max_value = 50}
+[thermometers.heat_switch]
+corresponding_heater = "HS_HEATER"
+coefficients = {P = 10, I = 1, D = 0, max_value = 25}
+
+
+
+###### States
+# Set values here to the nominal temperatures you want the heaters
+# to aim for while in that state.  The first state listed is the initial state,
+# and ALL states must be enumerated here
+
+[states.warm]
+[states.warming_up]
+pump = 300
+heat_switch = "T_switch_high"
+[states.cold]
+pump = 0
+heat_switch = "T_switch_high"
+[states.recycling]
+pump = 50
+heat_switch = 0
+
+
+
+###### Transitions
+# Set the criteria to move from one state to another.  "max_seconds" determines
+# the maximum amount of time allowable before the transition is forced.
+# Transition criteria are evaluated in the order they appear here
+
+[[transitions]] # Skip the cooldown if everything's already cold
+from = "warm"
+to = "cold"
+criteria = [
+    "pump < 20",
+    "4K < 6",
+    "1K < 2",
+]
+
+[[transitions]] # Normal initial cooldown
+from = "warm"
+to = "recycling"
+criteria = [
+    "pump < 50",
+    "4K < 5",
+    "1K > 2",
+]
+
+[[transitions]]
+from = "recycling"
+to = "cold"
+max_seconds = 7200
+criteria = [
+    "1K < 4.75",
+    "1K-main-plate < 4.75",
+    "4K < 4.75",
+]
+
+[[transitions]]
+from = "cold"
+to = "recycling"
+criteria = [
+    "1K > 2",
+]

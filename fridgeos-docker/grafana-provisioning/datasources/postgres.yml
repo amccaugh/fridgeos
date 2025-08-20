@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: fridgedb
+    user: grafana
+    secureJsonData:
+      password: grafana123
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: true
+    isDefault: true
+    editable: true
