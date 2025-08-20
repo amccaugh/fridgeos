@@ -1,0 +1,6 @@
+fridgeos-docker requires there to be the following files:
+
+fridgeos-docker/config/hal.toml
+fridgeos-docker/config/statemachine.toml
+
+You can use the files from fridgeos-docker/config-examples/
