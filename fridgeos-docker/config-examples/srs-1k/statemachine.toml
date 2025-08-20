@@ -25,7 +25,7 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 1K-switch = 4
 [states.warming_up]
 1K-pump = 250
-1K-switch = 0
+1K-switch = 4
 [states.sorption_starting]
 1K-pump = 0
 1K-switch = "switch_high_value"
@@ -97,6 +97,6 @@ criteria = [
 from = ["warming_up", "cold", "condensing_helium", "recycling", "sorption_starting"]
 to = "warm"
 criteria = [
-    "40K > 285",
-    "4K > 285",
+    "40K > 280",
+    "4K > 275",
 ]
