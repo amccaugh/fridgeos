@@ -92,4 +92,4 @@ target/
 
 # Configuration files
 fridgeos-docker/config/*
-!fridgeos-docker/config/place-config-files-here.txt
+!fridgeos-docker/config/0-place-config-files-here.txt
