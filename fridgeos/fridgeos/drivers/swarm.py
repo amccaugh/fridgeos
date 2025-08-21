@@ -5,12 +5,8 @@ import json
 
 class SwarmLockin():
     def __init__(self, address, calibration_file = None, name = None, mux = False):
-        try:
-            self.serial = Serial(address)
-            self.serial.close()
-        except Exception as e:
-            print(e)
-            pass
+        self.serial = Serial(address)
+        # self.serial.close()
         if calibration_file != None:
             self.calibration_array = np.loadtxt(calibration_file, delimiter =',')
         else:

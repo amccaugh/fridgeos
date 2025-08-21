@@ -244,7 +244,11 @@ class HALServer:
                 self.logger.debug(f'Hardware config: {hw}')
                 if 'setup' not in hw:
                     hw['setup'] = {}
-                python_object.setup(**hw['setup'])
+                try:
+                    python_object.setup(**hw['setup'])
+                except Exception as e:
+                    self.logger.error(f'Error setting up {hw_name}: {e}')
+                    raise e
                 self.logger.info(f'Added {hw["hardware"]} successfully')
                 # Add the thermometer object to self.thermometers dictionary
                 hw['python_object'] = python_object
