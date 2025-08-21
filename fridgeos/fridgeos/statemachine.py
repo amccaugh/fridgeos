@@ -128,15 +128,24 @@ class StateMachineServer:
                 <h2>FridgeOS State Machine Server</h2>
                 <p>Fridge name: {fridge_name}</p>
                 <ul>
-                    <li><a href="/info">Server Info</a> - Detailed status and configuration</li>
-                    <li><a href="/control">State Control</a> - Change system state</li>
-                    <li><a href="/heater/set">Heater Control</a> - Change heater values</li>
-                    <li><a href="/temperatures">Temperatures</a> - Current temperature readings</li>
-                    <li><a href="/heaters">Heaters</a> - Current heater values</li>
-                    <li><a href="/state">Current State</a> - Current state info only</li>
-                    <li><a href="/statelist">Available States</a> - List of all possible states</li>
-                    <li><a href="/health">Health Check</a> - Simple health status</li>
+                    <li>Information
+                        <ul>
+                            <li><a href="/info">Server Info</a> - Detailed status and configuration</li>
+                            <li><a href="/temperatures">Temperatures</a> - Current temperature readings</li>
+                            <li><a href="/heaters">Heaters</a> - Current heater values</li>
+                            <li><a href="/state">Current State</a> - Current state info only</li>
+                            <li><a href="/statelist">Available States</a> - List of all possible states</li>
+                            <li><a href="/health">Health Check</a> - Simple health status</li>
+                        </ul>
+                    </li>
+                    <li>Control
+                        <ul>
+                            <li><a href="/control">State Control</a> - Change system state</li>
+                            <li><a href="/heater/set">Heater Control</a> - Change heater values</li>
+                        </ul>
+                    </li>
                 </ul>
+                <p><a href="https://github.com/amccaugh/fridgeos" target="_blank">FridgeOS GitHub Repository</a></p>
             </body>
             </html>
             """
@@ -294,18 +303,10 @@ class StateMachineServer:
                     <html>
                     <head>
                         <title>Heater Set Successfully</title>
-                        <style>
-                            body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                            .success {{ color: green; font-weight: bold; }}
-                            .back-link {{ margin-top: 20px; }}
-                        </style>
                     </head>
                     <body>
-                        <h2 class="success">✓ Heater {heater_name} set to {value_float}</h2>
-                        <div class="back-link">
-                            <a href="/heater/set">← Back to Heater Control</a> | 
-                            <a href="/">← Back to Main Page</a>
-                        </div>
+                        <p>Heater {heater_name} set to {value_float}</p>
+                        <p><a href="/heater/set">← Back to Heater Control</a> | <a href="/">← Back to Main Page</a></p>
                     </body>
                     </html>
                     """)
@@ -329,16 +330,15 @@ class StateMachineServer:
             for heater_name in self.heaters.keys():
                 current_value = self.current_heater_values.get(heater_name, 0)
                 heater_forms += f"""
-                <div style="margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
-                    <h4>Heater: {heater_name}</h4>
-                    <p>Current value: {current_value}</p>
-                    <form action="/heater/set" method="post">
-                        <input type="hidden" name="heater_name" value="{heater_name}">
-                        <label for="value_{heater_name}">New Value:</label>
-                        <input type="number" step="0.1" name="value" id="value_{heater_name}" required>
-                        <input type="submit" value="Set Value">
-                    </form>
-                </div>
+                <p><strong>Heater: {heater_name}</strong></p>
+                <p>Current value: {current_value}</p>
+                <form action="/heater/set" method="post">
+                    <input type="hidden" name="heater_name" value="{heater_name}">
+                    <label for="value_{heater_name}">New Value:</label>
+                    <input type="number" step="0.1" name="value" id="value_{heater_name}" required>
+                    <input type="submit" value="Set Value">
+                </form>
+                <br>
                 """
             
             return f"""
@@ -346,16 +346,9 @@ class StateMachineServer:
             <html>
             <head>
                 <title>{fridge_name} Heater Control</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                    .heater-form {{ margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }}
-                    input[type="number"] {{ width: 100px; margin: 0 10px; }}
-                    input[type="submit"] {{ background: #007cba; color: white; padding: 5px 15px; border: none; border-radius: 3px; cursor: pointer; }}
-                    input[type="submit"]:hover {{ background: #005a87; }}
-                </style>
             </head>
             <body>
-                <h2>Heater Control</h2>
+                <h3>Heater Control</h3>
                 <p><a href="/">← Back to main page</a></p>
                 <p>Set individual heater values directly:</p>
                 {heater_forms}
@@ -449,7 +442,7 @@ class StateMachineServer:
                 </head>
                 <body>
                     <p>State changed to <strong>{state}</strong></p>
-                    <p><a href="/control">← Back to control page</a></p>
+                    <p><a href="/control">← Back to control page</a> | <a href="/">← Back to main page</a></p>
                 </body>
                 </html>
                 """)
@@ -496,7 +489,7 @@ class StateMachineServer:
                 </head>
                 <body>
                     <p>State changed to <strong>{state}</strong></p>
-                    <p><a href="/control">← Back to control page</a></p>
+                    <p><a href="/control">← Back to control page</a> | <a href="/">← Back to main page</a></p>
                 </body>
                 </html>
                 """)
