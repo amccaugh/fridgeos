@@ -1,5 +1,4 @@
 [settings]
-fridge_name = "swarm-1k"
 polling_interval = 3.0    # How often to read temperatures from the HAL
 
 [constants]  # Values that can be used as criteria for transitions
@@ -19,12 +18,15 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 # Kelvin, corresponding to the target temperature you want that heater to achieve
 # The first state listed is the initial state, and ALL states must be enumerated here
 
+[states.dontcycle]
+1K-pump = 0
+1K-switch = 0
 [states.warm]
 1K-pump = 0
 1K-switch = 0
 [states.warming_up]
 1K-pump = 250
-1K-switch = 250
+1K-switch = 0
 [states.sorption_starting]
 1K-pump = 0
 1K-switch = "switch_high_value"
@@ -49,7 +51,7 @@ from = "warm"
 to = "cold"
 criteria = [
     "1K-pump < 50",
-    "4K < 6",
+    "1K-main-plate < 6",
     "1K < 2",
 ]
 
@@ -58,7 +60,7 @@ from = "warm"
 to = "condensing_helium"
 criteria = [
     "1K-pump < 50",
-    "4K < 15",
+    "1K-main-plate < 15",
     "1K > 2",
 ]
 
@@ -67,6 +69,7 @@ from = "condensing_helium"
 to = "sorption_starting"
 criteria = [
     "1K < 3.25",
+# 3.25
 ]
 
 [[transitions]]
@@ -74,7 +77,7 @@ from = "sorption_starting"
 to = "cold"
 criteria = [
     "1K < 1.5",
-    "4K < 4.75",
+    "1K-main-plate < 4.75",
 ]
 
 [[transitions]]
@@ -86,7 +89,16 @@ criteria = [
 
 [[transitions]]
 from = "recycling"
-to = "sorption_starting"
+to = "condensing_helium"
 criteria = [
     "1K-pump > 40",
+]
+
+
+[[transitions]]
+from = "warming_up"
+to = "warm"
+criteria = [
+    "40K > 285",
+    "1K-main-plate > 285",
 ]
