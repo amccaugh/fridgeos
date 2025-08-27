@@ -686,16 +686,34 @@ class StateMachineServer:
         # Normal state processing
         for heater_name, heater_config in self.heaters.items():
             if heater_config['pid']:
-                # PID heaters need thermometer setpoints
-                corresponding_thermometer = heater_config['corresponding_thermometer']
-                if corresponding_thermometer in state_config:
-                    value = state_config[corresponding_thermometer]
-                    self.logger.debug(f'Setting {corresponding_thermometer} setpoint to {value} for PID heater {heater_name}')
-                    pid_controller = heater_config['pid_controller']
-                    pid_controller.setpoint = value
-                    self.logger.debug(f'PID setpoint for {heater_name} -> {corresponding_thermometer} set to {value}')
+                # PID heaters can be configured in two ways:
+                # 1. String value (e.g. "78.5 K"): Uses PID control with that setpoint
+                # 2. Numeric value (int/float): Sets heater directly, bypassing PID
+                
+                if heater_name in state_config:
+                    value = state_config[heater_name]
+                    if isinstance(value, str):
+                        # String value: Parse as PID setpoint
+                        try:
+                            # Remove any unit suffix (like "K") and convert to float
+                            setpoint_value = float(value.rstrip('K '))
+                            self.logger.debug(f'Setting PID setpoint for {heater_name} to {setpoint_value}')
+                            pid_controller = heater_config['pid_controller']
+                            pid_controller.setpoint = setpoint_value
+                            heater_config['use_pid'] = True
+                            # Remove any stored direct value
+                            heater_config.pop('current_value', None)
+                        except ValueError:
+                            self.logger.error(f'Invalid PID setpoint value "{value}" for heater {heater_name}')
+                    elif isinstance(value, (int, float)):
+                        # Numeric value: Set heater directly, bypassing PID
+                        self.logger.debug(f'Setting PID heater {heater_name} directly to {value} (bypassing PID)')
+                        heater_config['current_value'] = value
+                        heater_config['use_pid'] = False
+                    else:
+                        self.logger.error(f'Invalid value type for heater {heater_name}: {type(value)}')
                 else:
-                    self.logger.warning(f'No setpoint found for thermometer {corresponding_thermometer} in state {new_state}')
+                    self.logger.warning(f'No value found for PID heater {heater_name} in state {new_state}')
                     
             else:
                 # Direct heaters get their value directly from the state config
@@ -843,23 +861,35 @@ class StateMachineServer:
         # Update each heater based on its type
         for heater_name, heater_config in self.heaters.items():
             if heater_config['pid']:
-                # PID-controlled heater
-                thermometer_name = heater_config['corresponding_thermometer']
+                # Check if PID heater should use PID control or direct value
+                use_pid = heater_config.get('use_pid', True)  # Default to PID if not specified
                 
-                if thermometer_name not in self.current_temperatures:
-                    self.logger.error(f'No temperature entry for {thermometer_name} (heater {heater_name})')
-                    continue
+                if use_pid:
+                    # PID-controlled heater
+                    thermometer_name = heater_config['corresponding_thermometer']
                     
-                T = self.current_temperatures[thermometer_name]
-                if T is None:
-                    self.logger.error(f'Invalid temperature reading received for {thermometer_name} (heater {heater_name})')
-                    continue
-                    
-                self.logger.debug(f'Updating PID heater {heater_name} based on thermometer {thermometer_name} = {T}')
-                pid_controller = heater_config['pid_controller']
-                new_value = pid_controller(T)
-                self.logger.debug(f'Setting PID heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
-                self.hal_client.set_heater_value(heater_name, new_value)
+                    if thermometer_name not in self.current_temperatures:
+                        self.logger.error(f'No temperature entry for {thermometer_name} (heater {heater_name})')
+                        continue
+                        
+                    T = self.current_temperatures[thermometer_name]
+                    if T is None:
+                        self.logger.error(f'Invalid temperature reading received for {thermometer_name} (heater {heater_name})')
+                        continue
+                        
+                    self.logger.debug(f'Updating PID heater {heater_name} based on thermometer {thermometer_name} = {T}')
+                    pid_controller = heater_config['pid_controller']
+                    new_value = pid_controller(T)
+                    self.logger.debug(f'Setting PID heater {heater_name} to {new_value} (PID output for {thermometer_name}={T})')
+                    self.hal_client.set_heater_value(heater_name, new_value)
+                else:
+                    # PID heater configured for direct value (bypassing PID)
+                    if 'current_value' in heater_config:
+                        new_value = heater_config['current_value']
+                        self.logger.debug(f'Setting PID heater {heater_name} directly to {new_value} (bypassing PID)')
+                        self.hal_client.set_heater_value(heater_name, new_value)
+                    else:
+                        self.logger.warning(f'No current_value set for direct-controlled PID heater {heater_name}')
                 
             else:
                 # Direct-value heater
