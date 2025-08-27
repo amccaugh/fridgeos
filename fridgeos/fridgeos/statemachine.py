@@ -667,12 +667,38 @@ class StateMachineServer:
             parsed_states[state_name] = parsed_state
             self.logger.debug(f"Loaded state {state_name}: {parsed_state}")
         
+        # Validate that every state has a setpoint for every heater
+        self._validate_state_heater_completeness(parsed_states)
+        
         # Automatically add PAUSED state that prevents heaters from being activated
         parsed_states['PAUSED'] = {}
         self.logger.info(f"Automatically added PAUSED state")
         
         self.logger.info(f"Loaded {len(parsed_states)} states (including automatic PAUSED state)")
         return parsed_states
+    
+    def _validate_state_heater_completeness(self, parsed_states):
+        """
+        Validate that every state has a setpoint for every heater.
+        Raises an exception if any heater is missing from any state.
+        """
+        heater_names = set(self.heaters.keys())
+        missing_configs = []
+        
+        for state_name, state_config in parsed_states.items():
+            state_heaters = set(state_config.keys())
+            missing_heaters = heater_names - state_heaters
+            
+            if missing_heaters:
+                for heater_name in missing_heaters:
+                    missing_configs.append(f"State '{state_name}' is missing setpoint for heater '{heater_name}'")
+        
+        if missing_configs:
+            error_message = "State configuration validation failed:\n" + "\n".join(missing_configs)
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+        
+        self.logger.info(f"State validation passed: All {len(heater_names)} heaters have setpoints in all {len(parsed_states)} states")
         
     def update_heater_setpoints(self, new_state):
         self.logger.info(f"Updating heater setpoints for state: {new_state}")
@@ -690,40 +716,36 @@ class StateMachineServer:
                 # 1. String value (e.g. "78.5 K"): Uses PID control with that setpoint
                 # 2. Numeric value (int/float): Sets heater directly, bypassing PID
                 
-                if heater_name in state_config:
-                    value = state_config[heater_name]
-                    if isinstance(value, str):
-                        # String value: Parse as PID setpoint
-                        try:
-                            # Remove any unit suffix (like "K") and convert to float
-                            setpoint_value = float(value.rstrip('K '))
-                            self.logger.debug(f'Setting PID setpoint for {heater_name} to {setpoint_value}')
-                            pid_controller = heater_config['pid_controller']
-                            pid_controller.setpoint = setpoint_value
-                            heater_config['use_pid'] = True
-                            # Remove any stored direct value
-                            heater_config.pop('current_value', None)
-                        except ValueError:
-                            self.logger.error(f'Invalid PID setpoint value "{value}" for heater {heater_name}')
-                    elif isinstance(value, (int, float)):
-                        # Numeric value: Set heater directly, bypassing PID
-                        self.logger.debug(f'Setting PID heater {heater_name} directly to {value} (bypassing PID)')
-                        heater_config['current_value'] = value
-                        heater_config['use_pid'] = False
-                    else:
-                        self.logger.error(f'Invalid value type for heater {heater_name}: {type(value)}')
+                # Heater is guaranteed to be in state_config due to validation
+                value = state_config[heater_name]
+                if isinstance(value, str):
+                    # String value: Parse as PID setpoint
+                    try:
+                        # Remove any unit suffix (like "K") and convert to float
+                        setpoint_value = float(value.rstrip('K '))
+                        self.logger.debug(f'Setting PID setpoint for {heater_name} to {setpoint_value}')
+                        pid_controller = heater_config['pid_controller']
+                        pid_controller.setpoint = setpoint_value
+                        heater_config['use_pid'] = True
+                        # Remove any stored direct value
+                        heater_config.pop('current_value', None)
+                    except ValueError:
+                        self.logger.error(f'Invalid PID setpoint value "{value}" for heater {heater_name}')
+                elif isinstance(value, (int, float)):
+                    # Numeric value: Set heater directly, bypassing PID
+                    self.logger.debug(f'Setting PID heater {heater_name} directly to {value} (bypassing PID)')
+                    heater_config['current_value'] = value
+                    heater_config['use_pid'] = False
                 else:
-                    self.logger.warning(f'No value found for PID heater {heater_name} in state {new_state}')
+                    self.logger.error(f'Invalid value type for heater {heater_name}: {type(value)}')
                     
             else:
                 # Direct heaters get their value directly from the state config
-                if heater_name in state_config:
-                    value = state_config[heater_name]
-                    self.logger.debug(f'Setting direct heater {heater_name} to {value}')
-                    # Store the value for the update_heaters method to use
-                    heater_config['current_value'] = value
-                else:
-                    self.logger.warning(f'No value found for direct heater {heater_name} in state {new_state}')
+                # Heater is guaranteed to be in state_config due to validation
+                value = state_config[heater_name]
+                self.logger.debug(f'Setting direct heater {heater_name} to {value}')
+                # Store the value for the update_heaters method to use
+                heater_config['current_value'] = value
 
     def _check_criterion(self, criterion):
         # check if the temperature criterion is met
@@ -884,22 +906,17 @@ class StateMachineServer:
                     self.hal_client.set_heater_value(heater_name, new_value)
                 else:
                     # PID heater configured for direct value (bypassing PID)
-                    if 'current_value' in heater_config:
-                        new_value = heater_config['current_value']
-                        self.logger.debug(f'Setting PID heater {heater_name} directly to {new_value} (bypassing PID)')
-                        self.hal_client.set_heater_value(heater_name, new_value)
-                    else:
-                        self.logger.warning(f'No current_value set for direct-controlled PID heater {heater_name}')
+                    # current_value is guaranteed to be set due to validation and setpoint processing
+                    new_value = heater_config['current_value']
+                    self.logger.debug(f'Setting PID heater {heater_name} directly to {new_value} (bypassing PID)')
+                    self.hal_client.set_heater_value(heater_name, new_value)
                 
             else:
                 # Direct-value heater
-                if 'current_value' in heater_config:
-                    new_value = heater_config['current_value']
-                    
-                    self.logger.debug(f'Setting direct heater {heater_name} to {new_value}')
-                    self.hal_client.set_heater_value(heater_name, new_value)
-                else:
-                    self.logger.warning(f'No current_value set for direct heater {heater_name}')
+                # current_value is guaranteed to be set due to validation and setpoint processing
+                new_value = heater_config['current_value']
+                self.logger.debug(f'Setting direct heater {heater_name} to {new_value}')
+                self.hal_client.set_heater_value(heater_name, new_value)
 
     def run(self):
         self.logger.info('Starting state machine loop')
