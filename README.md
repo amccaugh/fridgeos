@@ -8,21 +8,30 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 
 - **Hardware Abstraction Layer (HAL)**: Unified interface for temperature sensors and heaters
 - **Modular Architecture**: Separate servers for hardware control, monitoring, and state management
-- **Real-time Monitoring**: Live temperature and heater monitoring with database logging
+- **Real-time Monitoring**: Live Grafana-based temperature and heater monitoring with built-in database
 - **State Machine Control**: Automated control sequences for complex refrigeration protocols
 - **Docker Support**: Containerized deployment with Grafana dashboards
-- **Extensible Driver System**: Support for various hardware devices
+- **Extensible Driver System**: Support for various hardware devices, including SRS CTC100, SRS SIM921, SRS922, 
 
 ## Architecture
 
 FridgeOS consists of several independent components:
 
-- **HAL Server** (`fridgeos.hal`): Hardware abstraction and device control
-- **Monitor Server** (`fridgeos.monitor`): Data logging and real-time monitoring
+- **HAL Server** (`fridgeos.hal`): Hardware abstraction and thermometer & heater control
 - **State Machine Server** (`fridgeos.statemachine`): Automated control sequences
-- **Scraper Service** (`fridgeos.scraper`): Database data collection
 
 ## Installation
+
+### Docker Installation
+
+Use the provided Docker configuration for production deployment:
+
+```bash
+cd fridgeos-docker
+docker-compose up -d
+```
+
+Then visit http://localhost:3000/ (Grafana) and http://localhost:8000/ (State and heater control)
 
 ### Development Installation
 
@@ -33,15 +42,6 @@ pip install -e .
 ```
 
 After editing the code, restart Python to load your changes.
-
-### Docker Installation
-
-Use the provided Docker configuration for production deployment:
-
-```bash
-cd fridgeos-docker
-docker-compose up -d
-```
 
 ## Quick Start
 
