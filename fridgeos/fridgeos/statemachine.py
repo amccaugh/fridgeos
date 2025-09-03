@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException, Form
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from fridgeos.logger import FridgeLogger
+from fridgeos import __version__
 import uvicorn
 import requests
 
@@ -31,7 +32,7 @@ class DummyHalClient:
 
 class StateMachineServer:
     def __init__(self, config_path, log_path, hal_client, polling_interval = 5, debug=True, http_port=8000):
-        self.app = FastAPI(title="State Machine Server", version="1.0.0")
+        self.app = FastAPI(title="State Machine Server", version=__version__)
         self.port = http_port
         self.server_thread: Optional[threading.Thread] = None
         
@@ -155,7 +156,7 @@ class StateMachineServer:
             try:
                 return {
                     "service": "FridgeOS State Machine Server",
-                    "version": "1.0.0",
+                    "version": __version__,
                     "current_state": self.current_state,
                     "available_states": list(self.states.keys()),
                     "state_entry_time": self.state_entry_time,

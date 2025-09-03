@@ -16,6 +16,7 @@ import uvicorn
 # Device driver imports
 from .drivers.haldrivers import hal_classes
 from fridgeos.logger import FridgeLogger
+from fridgeos import __version__
 
 
 class HeaterValueRequest(BaseModel):
@@ -88,7 +89,7 @@ class HALClient:
 
 class HALServer:
     def __init__(self, port: int, hardware_toml_path: str, log_path: str, debug: bool = True):
-        self.app = FastAPI(title="HAL Server", version="1.0.0")
+        self.app = FastAPI(title="HAL Server", version=__version__)
         self.port = port
         self.hardware = {}
         self.hardware['thermometers'] = {}
@@ -108,7 +109,7 @@ class HALServer:
             try:
                 return {
                     "service": "HAL Server",
-                    "version": "1.0.0",
+                    "version": __version__,
                     "temperatures": self.get_temperatures(),
                     "heater_values": self.get_heater_values(),
                     "heater_max_values": self.get_heater_max_values()
@@ -118,7 +119,7 @@ class HALServer:
                 # Return basic info if device reads fail
                 return {
                     "service": "HAL Server",
-                    "version": "1.0.0",
+                    "version": __version__,
                     "error": f"Could not read device values: {str(e)}"
                 }
         
