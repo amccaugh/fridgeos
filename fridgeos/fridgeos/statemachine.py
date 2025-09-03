@@ -660,6 +660,15 @@ class StateMachineServer:
                 # Check if value is a constant reference
                 if isinstance(value, str) and value in constants:
                     resolved_value = constants[value]
+                    # If the resolved value is a string that looks like a number with units, extract the number
+                    if isinstance(resolved_value, str):
+                        # Remove common temperature units (K, k) and convert to float
+                        numeric_str = resolved_value.rstrip(" kK")
+                        try:
+                            resolved_value = float(numeric_str)
+                            self.logger.debug(f"Converted string constant {constants[value]} to number {resolved_value}")
+                        except ValueError:
+                            self.logger.warning(f"Could not convert string constant {constants[value]} to number")
                     self.logger.debug(f"Resolved constant {value} -> {resolved_value} for {state_name}.{key}")
                 else:
                     resolved_value = value

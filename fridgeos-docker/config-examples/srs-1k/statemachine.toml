@@ -34,10 +34,10 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 1K-pump = 0
 1K-switch = "switch_high_value"
 [states.condensing_helium]
-1K-pump = pump_hot_temp
+1K-pump = "pump_hot_temp"
 1K-switch = 0
 [states.recycling]
-1K-pump = pump_hot_temp
+1K-pump = "pump_hot_temp"
 1K-switch = 0
 
 

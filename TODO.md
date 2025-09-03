@@ -8,8 +8,5 @@ Documentation:
 
 
 Optional:
-- Add required sequential temp readings to avoid glitches changing state
 - Add Grafana "value mapping" for state
-- Settings.toml:
-    - debug to be set to true/false
 - Have StateMachineServer version point to the correct fridgeos version
