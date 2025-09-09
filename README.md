@@ -13,9 +13,11 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 
 ## Quickstart
 
+FridgeOS is easiest to use as an all-in-one set of Docker containers that run independently and restart automatically if anything bad happens.  You can even test out its functionality without thermometer/heater hardware using a dummy configuration:
+
 - Clone this repository
 - Install Docker (linux recommended)
-- Create `fridgeos/fridgeos-docker/config/hal.toml` and  `fridgeos/fridgeos-docker/config/statemachine.toml
+- Create `fridgeos/fridgeos-docker/config/hal.toml` and  `fridgeos/fridgeos-docker/config/statemachine.toml`
     - Suggested start: Copy dummy configuration files from `fridgeos/fridgeos-docker/config-examples/dummy/`
     - Other example configurations are there as well
 - Start fridgeos:
@@ -26,6 +28,7 @@ docker-compose up -d
 ```
 - Wait ~1 minute for it to build (only the first time)
 - Visit http://localhost:3000/ (Grafana temperature & state plots) and http://localhost:8000/ (state and heater control)
+- Logs are available at `fridgeos/fridgeos-docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
 
 ### Development Installation
 
