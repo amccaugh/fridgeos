@@ -47,7 +47,7 @@
             "softMin": 0.1,
             "softMax": 400,
             "showPoints": "auto",
-            "spanNulls": 60000,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -376,7 +376,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": 60000,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
