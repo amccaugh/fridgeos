@@ -1,37 +1,31 @@
 # FridgeOS
 
-**Simple, easy-to-use control software for cryostats**
+**Robust, easy-to-use control software for cryostats**
 
-FridgeOS is a modular control system designed for cryogenic refrigeration systems. It provides a hardware abstraction layer (HAL) for temperature sensors and heaters, along with monitoring, data logging, and state machine capabilities.
+FridgeOS is a modular control system designed for cryogenic refrigeration systems. It allows or temperature sensors and heaters, along with monitoring, data logging, and state machine capabilities.
 
 ## Features
 
-- **Hardware Abstraction Layer (HAL)**: Unified interface for temperature sensors and heaters
-- **Modular Architecture**: Separate servers for hardware control, monitoring, and state management
-- **Real-time Monitoring**: Live Grafana-based temperature and heater monitoring with built-in database
-- **State Machine Control**: Automated control sequences for complex refrigeration protocols
-- **Docker Support**: Containerized deployment with Grafana dashboards
-- **Extensible Driver System**: Support for various hardware devices, including SRS CTC100, SRS SIM921, SRS922, 
+- **Real-time Monitoring**: Live Grafana-based temperature and heater monitoring with standardized PostgreSQL database
+- **State Machine Control**: Easy-to-configure control sequences for complex refrigeration protocols
+- **Docker Support**: Always-on architecture that recovers quickly and easily in the event of a crash
+- **Extensible Driver System**: Support for basic thermometer and heating systems (e.g SRS CTC100, SRS SIM921, Lakeshore, etc) and custom hardware is simple to add
 
-## Architecture
+## Quickstart
 
-FridgeOS consists of several independent components:
-
-- **HAL Server** (`fridgeos.hal`): Hardware abstraction and thermometer & heater control
-- **State Machine Server** (`fridgeos.statemachine`): Automated control sequences
-
-## Installation
-
-### Docker Installation
-
-Use the provided Docker configuration for production deployment:
+- Clone this repository
+- Install Docker (linux recommended)
+- Create `fridgeos/fridgeos-docker/config/hal.toml` and  `fridgeos/fridgeos-docker/config/statemachine.toml
+    - Suggested start: Copy dummy configuration files from `fridgeos/fridgeos-docker/config-examples/dummy/`
+    - Other example configurations are there as well
+- Start fridgeos:
 
 ```bash
 cd fridgeos-docker
 docker-compose up -d
 ```
-
-Then visit http://localhost:3000/ (Grafana) and http://localhost:8000/ (State and heater control)
+- Wait ~1 minute for it to build (only the first time)
+- Visit http://localhost:3000/ (Grafana temperature & state plots) and http://localhost:8000/ (state and heater control)
 
 ### Development Installation
 
@@ -43,44 +37,6 @@ pip install -e .
 
 After editing the code, restart Python to load your changes.
 
-## Quick Start
-
-### 1. Configure Hardware
-
-Create a TOML configuration file defining your hardware:
-
-```toml
-[[thermometers]]
-name = "mixing_chamber"
-hardware = "srs-sim921"
-setup.address = "/dev/ttyUSB0"
-setup.slot = 1
-
-[[heaters]]
-name = "mixing_chamber_heater"
-hardware = "korad-kd3005p"
-max_value = 25.0
-setup.address = "/dev/ttyUSB1"
-```
-
-### 2. Start the HAL Server
-
-```python
-from fridgeos.hal import HALServer
-
-server = HALServer(config_file="your-config.toml")
-server.start()
-```
-
-### 3. Connect a Client
-
-```python
-from fridgeos.hal import HALClient
-
-client = HALClient()
-temp = client.get_temperature("mixing_chamber")
-client.set_heater_value("mixing_chamber_heater", 10.0)
-```
 
 ## Adding New Hardware Drivers
 
@@ -209,14 +165,6 @@ Example configurations are provided in `demo-scripts/hal-toml-config/`:
 - `dummy-configuration.toml`: Testing with simulated devices
 - `hpd-1k-hal-config.toml`: Real hardware configuration
 - `swarm-1k-hal-configuration.toml`: Multi-channel configuration
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add your driver following the tutorial above
-4. Test thoroughly with real hardware
-5. Submit a pull request
 
 ## License
 
