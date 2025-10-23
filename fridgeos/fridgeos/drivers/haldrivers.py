@@ -146,14 +146,18 @@ class HAL_SIM922():
     
 class HAL_SwarmLockin():
     def setup(self, address, calibration_file = None, mux_name = None, mux = False):
-        self.thermometer = SwarmLockin(address, calibration_file, mux_name, mux)
+        # Don't pass calibration_file - HAL layer will handle conversion via conversion_csv
+        # calibration_file parameter kept for backward compatibility but not used
+        self.thermometer = SwarmLockin(address, calibration_file=None, name=mux_name, mux=mux)
 
     def get_temperature(self):
         return self.thermometer.read_temp()
-    
+
 class HAL_SwarmDiode():
     def setup(self, address, calibration_file = None, mux_name = None):
-        self.thermometer = SwarmDiode(address, calibration_file, mux_name)
+        # Don't pass calibration_file - HAL layer will handle conversion via conversion_csv
+        # calibration_file parameter kept for backward compatibility but not used
+        self.thermometer = SwarmDiode(address, calibration_file=None, name=mux_name)
 
     def get_temperature(self):
         return self.thermometer.read_temp()

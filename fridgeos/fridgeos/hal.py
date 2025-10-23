@@ -239,12 +239,17 @@ class HALServer:
         """ Load a calibration curve from a CSV file and cache it """
         if csv_path in self.calibration_curves:
             return self.calibration_curves[csv_path]
-        
+
         self.logger.debug(f"Loading calibration curve from {csv_path}")
         try:
             cal_array = np.loadtxt(csv_path, delimiter=',')
+
+            # Validate calibration array shape
+            if cal_array.ndim != 2 or cal_array.shape[1] != 2:
+                raise ValueError(f"Calibration file must have exactly 2 columns, got shape {cal_array.shape}")
+
             self.calibration_curves[csv_path] = cal_array
-            self.logger.info(f"Loaded calibration curve from {csv_path}")
+            self.logger.info(f"Loaded calibration curve from {csv_path} with {cal_array.shape[0]} data points")
             return cal_array
         except Exception as e:
             self.logger.error(f"Failed to load calibration curve from {csv_path}: {e}")
@@ -254,11 +259,19 @@ class HALServer:
         """ Apply calibration conversion to a raw value """
         if raw_value is None:
             return None
-        
+
         cal_array = self._load_calibration_curve(csv_path)
         # Calibration arrays are typically [temperature, raw_value] pairs
+        temps = cal_array[:, 0]
+        vals = cal_array[:, 1]
+
+        # Ensure vals are monotonically increasing for np.interp
+        if vals[0] > vals[-1]:
+            vals = vals[::-1]
+            temps = temps[::-1]
+
         # Use numpy interp to convert raw value to temperature
-        temperature = np.interp(raw_value, cal_array[:, 1], cal_array[:, 0])
+        temperature = np.interp(raw_value, vals, temps)
         self.logger.debug(f"Converted raw value {raw_value} to temperature {temperature} using {csv_path}")
         return float(temperature)
 
