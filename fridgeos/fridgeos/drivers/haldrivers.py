@@ -15,11 +15,23 @@ from fridgeos.drivers.srs_sim921 import SIM921
 from fridgeos.drivers.srs_sim922 import SIM922
 from fridgeos.drivers.swarm import SwarmLockin, SwarmDiode, SwarmHighPowerHeater, SwarmLowPowerHeater, WarmupHeater
 from fridgeos.drivers.dummy import DummyThermometer, DummyHeater
+from fridgeos.drivers.CTC100 import CTC
 import random
 import time
+import csv
+import numpy as np
 
 ### HEATERS
-
+class HAL_CTC100_HEATER():
+    def setup(self, serialport, channelname):
+        self.heater = CTC(serialport, channelname)
+        
+    def set_heater_value(self, value):
+        self.heater.set_out(value)
+        
+    def get_heater_value(self):
+        return self.heater.get_val()
+        
 class HAL_KD3005P():
     def setup(self, address):
         self.heater = KD3005P(address)
@@ -82,6 +94,30 @@ class HAL_FaultyDummyHeater():
 
 ### THERMOMETERS 
 
+class HAL_CTC100_THERMOMETER():
+    def setup(self, serialport, channelname, calfile):
+        self.thermometer = CTC(serialport, channelname)
+        temps, vals = [], []
+        calfile = "/app/fridgeos-src/fridgeos/calibration-curves/" + calfile + ".csv"
+        with open(calfile, newline='') as f:
+            reader = csv.reader(f)
+            next(reader)  # skip header
+            for t, v in reader:
+                temps.append(float(t))
+                vals.append(float(v))
+        self.temps = temps
+        self.vals = vals
+        
+    def get_temperature(self):
+        vals = self.vals
+        temps = self.temps
+        if vals[0] > vals[-1]:
+            vals = vals[::-1]
+            temps = temps[::-1]
+        return np.interp(self.thermometer.get_val(), vals, temps)
+        
+        
+        
 class HAL_SIM921():
     def setup(self, address, slot):
         self.thermometer = SIM921(address, sim900port=slot)
@@ -138,6 +174,8 @@ class HAL_LaggyDummyThermometer():
         return 7 + random.random()*0.1
 
 hal_classes = {
+    'CTC100-heater': HAL_CTC100_HEATER,
+    'CTC100-thermometer': HAL_CTC100_THERMOMETER,
     'korad-kd3005p': HAL_KD3005P,
     'srs-sim921': HAL_SIM921,
     'srs-sim922': HAL_SIM922,
