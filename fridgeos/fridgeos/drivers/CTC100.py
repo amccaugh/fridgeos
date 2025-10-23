@@ -1,13 +1,6 @@
 #%% #-*- coding: utf-8 -*-
-"""
-Created on Thu Jul 16 13:51:16 2015
+# Adapted for FridgeOS by Daniel Sorensen, August 2025
 
-@author: qittlab
-
-adapted for fridgeos by daniel sorensen august 2025
-"""
-
-import numpy as np
 import serial
 import time
 import sys
