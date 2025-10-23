@@ -47,7 +47,7 @@
             "softMin": 0.1,
             "softMax": 400,
             "showPoints": "auto",
-            "spanNulls": 60000,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -249,6 +249,112 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "color-background"
+          },
+          "mappings": [
+            {
+              "options": {
+                "warm": {
+                  "color": "red",
+                  "index": 0
+                },
+                "warming_up": {
+                  "color": "orange",
+                  "index": 1
+                },
+                "sorption_starting": {
+                  "color": "yellow",
+                  "index": 2
+                },
+                "cold": {
+                  "color": "blue",
+                  "index": 3
+                },
+                "condensing_helium": {
+                  "color": "light-blue",
+                  "index": 4
+                },
+                "recycling": {
+                  "color": "purple",
+                  "index": 5
+                },
+                "PAUSED": {
+                  "color": "dark-gray",
+                  "index": 6
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 17
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "State"
+          }
+        ]
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  state AS \"Current State\"\nFROM states\nORDER BY time DESC\nLIMIT 1;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Current State",
+      "type": "table"
+    },
+    {
+      "datasource": "PostgreSQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -270,7 +376,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": 60000,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"

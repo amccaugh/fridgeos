@@ -1,3 +1,20 @@
+# This file is part of fridgeos
+# Copyright (C) 2025 by Adam McCaughan
+
+# cryoheatflow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import tomllib
 import os
 from datetime import datetime
@@ -11,6 +28,7 @@ from fastapi import FastAPI, HTTPException, Form
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from fridgeos.logger import FridgeLogger
+from fridgeos import __version__
 import uvicorn
 import requests
 
@@ -31,7 +49,7 @@ class DummyHalClient:
 
 class StateMachineServer:
     def __init__(self, config_path, log_path, hal_client, polling_interval = 5, debug=True, http_port=8000):
-        self.app = FastAPI(title="State Machine Server", version="1.0.0")
+        self.app = FastAPI(title="State Machine Server", version=__version__)
         self.port = http_port
         self.server_thread: Optional[threading.Thread] = None
         
@@ -155,7 +173,7 @@ class StateMachineServer:
             try:
                 return {
                     "service": "FridgeOS State Machine Server",
-                    "version": "1.0.0",
+                    "version": __version__,
                     "current_state": self.current_state,
                     "available_states": list(self.states.keys()),
                     "state_entry_time": self.state_entry_time,
@@ -660,6 +678,15 @@ class StateMachineServer:
                 # Check if value is a constant reference
                 if isinstance(value, str) and value in constants:
                     resolved_value = constants[value]
+                    # If the resolved value is a string that looks like a number with units, extract the number
+                    if isinstance(resolved_value, str):
+                        # Remove common temperature units (K, k) and convert to float
+                        numeric_str = resolved_value.rstrip(" kK")
+                        try:
+                            resolved_value = float(numeric_str)
+                            self.logger.debug(f"Converted string constant {constants[value]} to number {resolved_value}")
+                        except ValueError:
+                            self.logger.warning(f"Could not convert string constant {constants[value]} to number")
                     self.logger.debug(f"Resolved constant {value} -> {resolved_value} for {state_name}.{key}")
                 else:
                     resolved_value = value

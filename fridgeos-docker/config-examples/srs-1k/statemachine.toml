@@ -5,7 +5,6 @@ state_change_password = "hpd"
 
 [constants]  # Values that can be used as criteria for transitions
 switch_high_value = 4
-pump_hot_temp = "50 K"
 
 
 [heaters.1K-pump] # This is a PID heater
@@ -22,8 +21,8 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 # The first state listed is the initial state, and ALL states must be enumerated here
 
 [states.warm]
-1K-pump = 0
-1K-switch = 4
+1K-pump = "20 K"
+1K-switch = 0
 [states.warming_up]
 1K-pump = "250 K"
 1K-switch = 4
@@ -34,10 +33,10 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 1K-pump = 0
 1K-switch = "switch_high_value"
 [states.condensing_helium]
-1K-pump = pump_hot_temp
+1K-pump = "50 K"
 1K-switch = 0
 [states.recycling]
-1K-pump = pump_hot_temp
+1K-pump = "50 K"
 1K-switch = 0
 
 
@@ -59,9 +58,8 @@ criteria = [
 from = "warm"
 to = "recycling"
 criteria = [
-    "1K-pump < 6",
-    "4K < 6",
-    "1K-main-plate < 6",
+    "4K < 6.5",
+    "1K-main-plate < 6.5",
 ]
 
 [[transitions]]
@@ -75,7 +73,7 @@ criteria = [
 from = "condensing_helium"
 to = "sorption_starting"
 criteria = [
-    "1K < 3.25",
+    "1K < 3.5",
 ]
 
 [[transitions]]

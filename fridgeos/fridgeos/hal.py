@@ -1,3 +1,20 @@
+# This file is part of fridgeos
+# Copyright (C) 2025 by Adam McCaughan
+
+# cryoheatflow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import json
 import tomllib
 import time
@@ -16,6 +33,7 @@ import uvicorn
 # Device driver imports
 from .drivers.haldrivers import hal_classes
 from fridgeos.logger import FridgeLogger
+from fridgeos import __version__
 
 
 class HeaterValueRequest(BaseModel):
@@ -88,7 +106,7 @@ class HALClient:
 
 class HALServer:
     def __init__(self, port: int, hardware_toml_path: str, log_path: str, debug: bool = True):
-        self.app = FastAPI(title="HAL Server", version="1.0.0")
+        self.app = FastAPI(title="HAL Server", version=__version__)
         self.port = port
         self.hardware = {}
         self.hardware['thermometers'] = {}
@@ -108,7 +126,7 @@ class HALServer:
             try:
                 return {
                     "service": "HAL Server",
-                    "version": "1.0.0",
+                    "version": __version__,
                     "temperatures": self.get_temperatures(),
                     "heater_values": self.get_heater_values(),
                     "heater_max_values": self.get_heater_max_values()
@@ -118,7 +136,7 @@ class HALServer:
                 # Return basic info if device reads fail
                 return {
                     "service": "HAL Server",
-                    "version": "1.0.0",
+                    "version": __version__,
                     "error": f"Could not read device values: {str(e)}"
                 }
         
