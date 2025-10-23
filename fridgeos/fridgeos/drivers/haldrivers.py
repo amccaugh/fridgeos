@@ -23,8 +23,8 @@ import numpy as np
 
 ### HEATERS
 class HAL_CTC100_HEATER():
-    def setup(self, serialport, channelname):
-        self.heater = CTC(serialport, channelname)
+    def setup(self, address, channelname):
+        self.heater = CTC(address, channelname)
         
     def set_heater_value(self, value):
         self.heater.set_out(value)
@@ -95,8 +95,8 @@ class HAL_FaultyDummyHeater():
 ### THERMOMETERS 
 
 class HAL_CTC100_THERMOMETER():
-    def setup(self, serialport, channelname, calfile):
-        self.thermometer = CTC(serialport, channelname)
+    def setup(self, address, channelname, calfile):
+        self.thermometer = CTC(address, channelname)
         temps, vals = [], []
         calfile = "/app/fridgeos-src/fridgeos/calibration-curves/" + calfile + ".csv"
         with open(calfile, newline='') as f:
