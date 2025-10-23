@@ -22,7 +22,7 @@ import csv
 import numpy as np
 
 ### HEATERS
-class HAL_CTC100_HEATER():
+class HAL_CTC100_Heater():
     def setup(self, address, channelname):
         self.heater = CTC(address, channelname)
         
@@ -94,39 +94,12 @@ class HAL_FaultyDummyHeater():
 
 ### THERMOMETERS 
 
-class HAL_CTC100_THERMOMETER():
-    def setup(self, address, channelname, calfile=None):
+class HAL_CTC100_Thermometer():
+    def setup(self, address, channelname):
         self.thermometer = CTC(address, channelname)
-        self.temps = None
-        self.vals = None
-        
-        # Only load calibration file if provided (for backward compatibility)
-        if calfile is not None:
-            temps, vals = [], []
-            calfile = "/app/fridgeos-src/fridgeos/calibration-curves/" + calfile + ".csv"
-            with open(calfile, newline='') as f:
-                reader = csv.reader(f)
-                next(reader)  # skip header
-                for t, v in reader:
-                    temps.append(float(t))
-                    vals.append(float(v))
-            self.temps = temps
-            self.vals = vals
         
     def get_temperature(self):
-        raw_value = self.thermometer.get_val()
-        
-        # If calibration data is loaded, apply it (backward compatibility)
-        if self.vals is not None and self.temps is not None:
-            vals = self.vals
-            temps = self.temps
-            if vals[0] > vals[-1]:
-                vals = vals[::-1]
-                temps = temps[::-1]
-            return np.interp(raw_value, vals, temps)
-        else:
-            # Return raw value for HAL layer to convert
-            return raw_value
+        return self.thermometer.get_val()
         
         
         
@@ -190,8 +163,8 @@ class HAL_LaggyDummyThermometer():
         return 7 + random.random()*0.1
 
 hal_classes = {
-    'CTC100-heater': HAL_CTC100_HEATER,
-    'CTC100-thermometer': HAL_CTC100_THERMOMETER,
+    'CTC100-heater': HAL_CTC100_Heater,
+    'CTC100-thermometer': HAL_CTC100_Thermometer,
     'korad-kd3005p': HAL_KD3005P,
     'srs-sim921': HAL_SIM921,
     'srs-sim922': HAL_SIM922,
