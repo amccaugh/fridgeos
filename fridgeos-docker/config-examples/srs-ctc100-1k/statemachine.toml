@@ -1,0 +1,103 @@
+[settings]
+fridge_name = "ryan"
+polling_interval = 3.0    # How often to read temperatures from the HAL
+state_change_password = "ryan"
+
+[constants]  # Values that can be used as criteria for transitions
+switch_high_value = 4
+pump_hot_temp = "50 K"
+
+
+[heaters.1K-pump] # This is a PID heater
+corresponding_thermometer = "1K-pump"
+pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
+[heaters.1K-switch] # This is a non-PID heater
+
+
+
+###### States
+# Set values here to the values you want the heaters
+# to aim for while in that state.  For heaters that are PIDs, values should be in
+# Kelvin, corresponding to the target temperature you want that heater to achieve
+# The first state listed is the initial state, and ALL states must be enumerated here
+
+[states.warm]
+1K-pump = 0
+1K-switch = 4
+[states.warming_up]
+1K-pump = "250 K"
+1K-switch = 4
+[states.sorption_starting]
+1K-pump = 0
+1K-switch = "switch_high_value"
+[states.cold]
+1K-pump = 0
+1K-switch = "switch_high_value"
+[states.condensing_helium]
+1K-pump = "50 K"
+1K-switch = 0
+[states.recycling]
+1K-pump = "50 K"
+1K-switch = 0
+
+
+
+###### Transitions
+# Set the criteria to move from one state to another.
+# Transition criteria are evaluated in the order they appear here
+
+[[transitions]] # Skip the cooldown if everything's already cold
+from = "warm"
+to = "cold"
+criteria = [
+    "1K-pump < 50",
+    "4K < 6",
+    "1K < 2",
+]
+
+[[transitions]]
+from = "warm"
+to = "recycling"
+criteria = [
+    "1K-pump < 6",
+    "4K < 6",
+    "1K-main-plate < 6",
+]
+
+[[transitions]]
+from = "recycling"
+to = "condensing_helium"
+criteria = [
+    "1K-pump > 40",
+]
+
+[[transitions]]
+from = "condensing_helium"
+to = "sorption_starting"
+criteria = [
+    "1K < 3.25",
+]
+
+[[transitions]]
+from = "sorption_starting"
+to = "cold"
+criteria = [
+    "1K < 1.5",
+    "4K < 4.75",
+]
+
+[[transitions]]
+from = "cold"
+to = "recycling"
+criteria = [
+    "1K > 2",
+]
+
+
+[[transitions]]
+from = ["warming_up", "cold", "condensing_helium", "recycling", "sorption_starting"]
+to = "warm"
+criteria = [
+    "40K > 280",
+    "4K > 275",
+]

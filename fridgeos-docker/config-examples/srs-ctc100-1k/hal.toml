@@ -1,0 +1,45 @@
+[[thermometers]]
+name = "1K"
+hardware = "CTC100-thermometer"
+conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DT470.csv"
+# Arguments that will be passed to setup() in the hardware driver
+setup.address = "/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00"
+setup.channelname = "1KHead"
+
+[[thermometers]]
+name = "4K"
+hardware = "CTC100-thermometer"
+conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DT670.csv"
+# Arguments that will be passed to setup() in the hardware driver
+setup.address = "/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00"
+setup.channelname = "4K"
+
+[[thermometers]]
+name = "1K-pump"
+hardware = "CTC100-thermometer"
+conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DT470.csv"
+# Arguments that will be passed to setup() in the hardware driver
+setup.address = "/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00"
+setup.channelname = "Pump"
+
+[[thermometers]]
+name = "40K"
+hardware = "CTC100-thermometer"
+conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DT670.csv"
+# Arguments that will be passed to setup() in the hardware driver
+setup.address = "/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00"
+setup.channelname = "40K"
+
+[[heaters]]
+name = "1K-switch"
+hardware = "CTC100-heater"
+max_value = 3.5
+setup.address = "/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00"
+setup.channelname = "HS"
+
+[[heaters]]
+name = "1K-pump"
+hardware = "CTC100-heater"
+max_value = 25
+setup.address = "/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00"
+setup.channelname = "HP"
