@@ -148,7 +148,10 @@ class HALServer:
         @self.app.get("/temperatures")
         async def get_all_temperatures():
             try:
-                return self.get_temperatures()
+                temps = self.get_temperatures()
+                # Final safety net: convert any nan/inf values to None for JSON compatibility
+                temps = {k: (None if (v is not None and not np.isfinite(v)) else v) for k, v in temps.items()}
+                return temps
             except Exception as e:
                 self.logger.error(f'Error getting all temperatures: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
@@ -270,8 +273,14 @@ class HALServer:
             vals = vals[::-1]
             temps = temps[::-1]
 
-        # Use numpy interp to convert raw value to temperature
-        temperature = np.interp(raw_value, vals, temps)
+        # Use numpy interp to convert raw value to temperature, setting left=temps[0] and right=temps[-1]
+        temperature = np.interp(raw_value, vals, temps, left=temps[0], right=temps[-1])
+
+        # Check for invalid float values (nan, inf) and convert to None for JSON compatibility
+        if not np.isfinite(temperature):
+            self.logger.warning(f"Calibration conversion produced invalid value (nan/inf) for raw_value={raw_value} using {csv_path}")
+            return None
+
         self.logger.debug(f"Converted raw value {raw_value} to temperature {temperature} using {csv_path}")
         return float(temperature)
 
@@ -321,16 +330,21 @@ class HALServer:
         hw = self.get_hardware(name=name, hardware_type='thermometers')
         try:
             temp = hw.get_temperature()
-            
+
             # Check if this thermometer has a conversion_csv property for calibration
             if 'conversion_csv' in self.hardware['thermometers'][name]:
                 csv_path = self.hardware['thermometers'][name]['conversion_csv']
                 self.logger.debug(f"Applying calibration conversion for {name} using {csv_path}")
                 temp = self._apply_calibration(temp, csv_path)
-                
+
+            # Validate that temp is JSON-serializable (not nan or inf)
+            if temp is not None and not np.isfinite(temp):
+                self.logger.warning(f"Temperature reading for {name} is invalid (nan/inf): {temp}, setting to None")
+                temp = None
+
         except Exception as e:
             self.logger.error(f"Error reading temperature from {name}: {e}")
-            temp = None  # or float('nan') if you prefer NaN
+            temp = None  # Set to None for JSON compatibility
         return {name: temp}
     
     def get_heater_value(self, name):
