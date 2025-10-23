@@ -164,6 +164,20 @@ def get_heater_value(self):
     pass
 ```
 
+## Temperature Calibration
+
+Any thermometer can use the `conversion_csv` property to convert raw sensor readings (voltage, resistance) to temperature:
+
+```toml
+[[thermometers]]
+name = "1K"
+hardware = "swarm_diode"
+conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv"
+setup.address = "/dev/ttyUSB0"
+```
+
+The CSV file should have two columns: `temperature,raw_value`. Pre-configured curves are available in `fridgeos/fridgeos/calibration-curves/`.
+
 ## Configuration Examples
 
 Example configurations are provided in `demo-scripts/hal-toml-config/`:
