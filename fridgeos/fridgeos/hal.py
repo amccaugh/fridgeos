@@ -113,6 +113,7 @@ class HALServer:
         self.hardware['heaters'] = {}
         self.logger = FridgeLogger(log_path, logger_name='HAL', debug=debug).logger
         self.server_thread: Optional[threading.Thread] = None
+        self.calibration_curves = {}  # Cache for loaded calibration curves
         
         self.load_hardware(hardware_toml_path)
         self.logger.info(f"HAL Server initialized with {len(self.hardware['thermometers'])} thermometers and {len(self.hardware['heaters'])} heaters")
@@ -233,6 +234,33 @@ class HALServer:
             raise ValueError(f'Device name "{name}" not found for hardware type {hardware_type}')
         else:
             return self.hardware[hardware_type][name]['python_object']
+    
+    def _load_calibration_curve(self, csv_path):
+        """ Load a calibration curve from a CSV file and cache it """
+        if csv_path in self.calibration_curves:
+            return self.calibration_curves[csv_path]
+        
+        self.logger.debug(f"Loading calibration curve from {csv_path}")
+        try:
+            cal_array = np.loadtxt(csv_path, delimiter=',')
+            self.calibration_curves[csv_path] = cal_array
+            self.logger.info(f"Loaded calibration curve from {csv_path}")
+            return cal_array
+        except Exception as e:
+            self.logger.error(f"Failed to load calibration curve from {csv_path}: {e}")
+            raise e
+    
+    def _apply_calibration(self, raw_value, csv_path):
+        """ Apply calibration conversion to a raw value """
+        if raw_value is None:
+            return None
+        
+        cal_array = self._load_calibration_curve(csv_path)
+        # Calibration arrays are typically [temperature, raw_value] pairs
+        # Use numpy interp to convert raw value to temperature
+        temperature = np.interp(raw_value, cal_array[:, 1], cal_array[:, 0])
+        self.logger.debug(f"Converted raw value {raw_value} to temperature {temperature} using {csv_path}")
+        return float(temperature)
 
     def load_hardware(self, hardware_toml_path):
         self.logger.info(f"Loading hardware configuration from: {hardware_toml_path}")
@@ -280,6 +308,13 @@ class HALServer:
         hw = self.get_hardware(name=name, hardware_type='thermometers')
         try:
             temp = hw.get_temperature()
+            
+            # Check if this thermometer has a conversion_csv property for calibration
+            if 'conversion_csv' in self.hardware['thermometers'][name]:
+                csv_path = self.hardware['thermometers'][name]['conversion_csv']
+                self.logger.debug(f"Applying calibration conversion for {name} using {csv_path}")
+                temp = self._apply_calibration(temp, csv_path)
+                
         except Exception as e:
             self.logger.error(f"Error reading temperature from {name}: {e}")
             temp = None  # or float('nan') if you prefer NaN

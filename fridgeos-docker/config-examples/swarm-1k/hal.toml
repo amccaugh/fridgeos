@@ -1,51 +1,51 @@
 [[thermometers]]
 name = '1K'
 hardware = 'swarm_lockin'
+conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/RuO2mean.csv'
 setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_4250304b38363118-if00'
-setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/RuO2mean.csv'
 setup.mux = 'False'
 
 
 [[thermometers]]
 name = '1K-pump'
 hardware = 'swarm_diode'
+conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_df633448939a2830-if00'
-setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.mux_name = '4PUMP'
 
 [[thermometers]]
 name = '1K-switch'
 hardware = 'swarm_diode'
+conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_df633448939a2830-if00'
-setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.mux_name = '4SWITCH'
 
 [[thermometers]]
 name = '1K-film-burner'
 hardware = 'swarm_diode'
+conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_df633448939a2830-if00'
-setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.mux_name = 'FILM_BURNER'
 
 [[thermometers]]
 name = '1K-main-plate'
 hardware = 'swarm_diode'
+conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_df633448939a2830-if00'
-setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.mux_name = 'MAINPLATE'
 
 [[thermometers]]
 name = '40K'
 hardware = 'swarm_diode'
+conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_df633448939a2830-if00'
-setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 setup.mux_name = '40K'
 
 #[[thermometers]]
 #name = '4K'
 #hardware = 'swarm_diode'
+#conversion_csv = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 #setup.address = '/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_df633448939a2830-if00'
-#setup.calibration_file = '/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv'
 
 [[heaters]]
 name = '1K-pump'

@@ -95,26 +95,38 @@ class HAL_FaultyDummyHeater():
 ### THERMOMETERS 
 
 class HAL_CTC100_THERMOMETER():
-    def setup(self, address, channelname, calfile):
+    def setup(self, address, channelname, calfile=None):
         self.thermometer = CTC(address, channelname)
-        temps, vals = [], []
-        calfile = "/app/fridgeos-src/fridgeos/calibration-curves/" + calfile + ".csv"
-        with open(calfile, newline='') as f:
-            reader = csv.reader(f)
-            next(reader)  # skip header
-            for t, v in reader:
-                temps.append(float(t))
-                vals.append(float(v))
-        self.temps = temps
-        self.vals = vals
+        self.temps = None
+        self.vals = None
+        
+        # Only load calibration file if provided (for backward compatibility)
+        if calfile is not None:
+            temps, vals = [], []
+            calfile = "/app/fridgeos-src/fridgeos/calibration-curves/" + calfile + ".csv"
+            with open(calfile, newline='') as f:
+                reader = csv.reader(f)
+                next(reader)  # skip header
+                for t, v in reader:
+                    temps.append(float(t))
+                    vals.append(float(v))
+            self.temps = temps
+            self.vals = vals
         
     def get_temperature(self):
-        vals = self.vals
-        temps = self.temps
-        if vals[0] > vals[-1]:
-            vals = vals[::-1]
-            temps = temps[::-1]
-        return np.interp(self.thermometer.get_val(), vals, temps)
+        raw_value = self.thermometer.get_val()
+        
+        # If calibration data is loaded, apply it (backward compatibility)
+        if self.vals is not None and self.temps is not None:
+            vals = self.vals
+            temps = self.temps
+            if vals[0] > vals[-1]:
+                vals = vals[::-1]
+                temps = temps[::-1]
+            return np.interp(raw_value, vals, temps)
+        else:
+            # Return raw value for HAL layer to convert
+            return raw_value
         
         
         
