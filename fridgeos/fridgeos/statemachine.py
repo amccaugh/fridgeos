@@ -788,7 +788,10 @@ class StateMachineServer:
         result = criterion['op'](
             current_temperatures[criterion['sensor']],
             criterion['value'])
-        self.logger.debug(f'Criterion: {criterion["sensor"]} {criterion["op"]} {criterion["value"]} = {result}')
+        
+        # Convert operator function to symbol for logging
+        op_symbol = '<' if criterion['op'] == operator.lt else '>'
+        self.logger.debug(f'Criterion: {criterion["sensor"]} {op_symbol} {criterion["value"]} = {result}')
         return result
 
     def check_transitions(self):
