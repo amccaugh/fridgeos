@@ -33,15 +33,10 @@ docker-compose up -d
 - Visit http://localhost:3000/ (Grafana temperature & state plots) and http://localhost:8000/ (state and heater control)
 - Logs are available at `fridgeos/fridgeos-docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
 
-### Development Installation
+## Architecture overview
 
-Navigate to the project directory and install in development mode:
+<img width="2919" height="1660" alt="image" src="https://github.com/user-attachments/assets/424a61b7-a09b-410b-a801-5587832fcbda" />
 
-```bash
-pip install -e .
-```
-
-After editing the code, restart Python to load your changes.
 
 
 ## Adding New Hardware Drivers
@@ -164,7 +159,7 @@ def get_heater_value(self):
     pass
 ```
 
-## Temperature Calibration
+## Thermometer calibration & conversion
 
 Any thermometer can use the `conversion_csv` property to convert raw sensor readings (voltage, resistance) to temperature:
 
@@ -176,15 +171,7 @@ conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv"
 setup.address = "/dev/ttyUSB0"
 ```
 
-The CSV file should have two columns: `temperature,raw_value`. Pre-configured curves are available in `fridgeos/fridgeos/calibration-curves/`.
-
-## Configuration Examples
-
-Example configurations are provided in `demo-scripts/hal-toml-config/`:
-
-- `dummy-configuration.toml`: Testing with simulated devices
-- `hpd-1k-hal-config.toml`: Real hardware configuration
-- `swarm-1k-hal-configuration.toml`: Multi-channel configuration
+The CSV file should have two columns: `temperature, raw_value`. Pre-configured curves are available in `fridgeos/fridgeos/calibration-curves/`.
 
 ## License
 
