@@ -35,7 +35,7 @@ docker-compose up -d
 
 ## Architecture overview
 
-<img width="2919" height="1660" alt="image" src="https://github.com/user-attachments/assets/424a61b7-a09b-410b-a801-5587832fcbda" />
+<img width="2918" height="1656" alt="image" src="https://github.com/user-attachments/assets/1fe94384-1503-4c78-91cf-f584f896d60a" />
 
 
 
