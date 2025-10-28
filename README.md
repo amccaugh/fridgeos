@@ -9,10 +9,11 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 
 ## Features
 
-- **Real-time Monitoring**: Live Grafana-based temperature and heater monitoring with standardized PostgreSQL database
-- **State Machine Control**: Easy-to-configure control sequences for complex refrigeration protocols
-- **Docker Support**: Always-on architecture that recovers quickly and easily in the event of a crash
-- **Extensible Driver System**: Support for basic thermometer and heating systems (e.g SRS CTC100, SRS SIM921, Lakeshore, etc) and custom hardware is simple to add
+- **Real-time monitoring**: Live Grafana-based temperature and heater monitoring with standardized PostgreSQL database
+- **State machine control**: Easy-to-configure control sequences for complex refrigeration protocols
+- **Web-based interface**: Simply use your web browser to view historical data, control heaters, change state, and more
+- **Docker support**: Always-on architecture that recovers quickly and easily in the event of a crash
+- **Extensible driver system**: Support for basic thermometer and heating systems (e.g SRS CTC100, SRS SIM921, Lakeshore, etc) and custom hardware is simple to add
 
 ## Quickstart
 
