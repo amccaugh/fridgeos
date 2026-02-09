@@ -31,7 +31,7 @@ cd fridgeos-docker
 docker-compose up -d
 ```
 - Wait ~1 minute for it to build (only the first time)
-- Visit http://localhost:3000/ (Grafana temperature & state plots) and http://localhost:8000/ (state and heater control)
+- Visit http://localhost:3000/ (Grafana temperature & state plots, username/password=admin/admin) and http://localhost:8000/ (state and heater control)
 - Logs are available at `fridgeos/fridgeos-docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
 
 ## Architecture overview
