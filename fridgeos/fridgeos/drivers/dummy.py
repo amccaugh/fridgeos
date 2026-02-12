@@ -18,7 +18,7 @@ class DummyHeater():
     
 
 class DummyThermometer():
-    def __init__(self, address):
+    def __init__(self, address, **kwargs):
         self.address = address
 
     def read_temperature(self):

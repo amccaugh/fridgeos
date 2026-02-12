@@ -3,6 +3,7 @@ name = "4K"
 hardware = "DummyThermometer"
 # Arguments that will be passed to setup() in the hardware driver
 setup.address = "COM1"
+setp.slot = 3
 
 [[thermometers]]
 name = "1K"
@@ -13,6 +14,7 @@ setup.address = "COM2"
 name = "1K-main-plate"
 hardware = "DummyThermometer"
 setup.address = "COM1"
+setp.slot = 4
 
 [[thermometers]]
 name = "pump"
