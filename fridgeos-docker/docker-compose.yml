@@ -19,7 +19,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # timescale/timescaledb-ha uses /home/postgres/pgdata/data as the actual
+      # PostgreSQL data_directory; mount the parent so the cluster persists.
+      - postgres_data:/home/postgres/pgdata
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
     networks:
