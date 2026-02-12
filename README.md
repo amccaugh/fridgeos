@@ -10,7 +10,7 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 ## Features
 
 - **Real-time monitoring**: Live Grafana-based temperature and heater monitoring with standardized PostgreSQL database
-- **State machine control**: Easy-to-configure control sequences for complex refrigeration protocols
+- **State machine control**: Easy-to-configure, plain-text sequence configuration for complex refrigeration protocols
 - **Web-based interface**: Simply use your web browser to view historical data, control heaters, change state, and more
 - **Docker support**: Always-on architecture that recovers quickly and easily in the event of a crash
 - **Extensible driver system**: Support for basic thermometer and heating systems (e.g SRS CTC100, SRS SIM921, Lakeshore, etc) and custom hardware is simple to add
@@ -31,7 +31,8 @@ cd fridgeos-docker
 docker-compose up -d
 ```
 - Wait ~1 minute for it to build (only the first time)
-- Visit http://localhost:3000/ (Grafana temperature & state plots, username/password=admin/admin) and http://localhost:8000/ (state and heater control)
+- Visit http://localhost:3000/d/cryostat-temps/cryostat-temperature-dashboard (Grafana temperature & state plots, username/password=`admin`/`admin`)
+- Visit http://localhost:8000/ (state and heater control)
 - Logs are available at `fridgeos/fridgeos-docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
 
 ## Architecture overview
@@ -46,20 +47,20 @@ This tutorial shows how to add support for a new hardware device (e.g., SRS SIM9
 
 ### Step 1: Create the Hardware Driver
 
-Create a new driver file in `fridgeos/hal/drivers/`. For example, `srs_sim923.py`:
+Create a new driver file in `fridgeos/fridgeos/drivers/`. For example, `my_new_thermometer.py`:
 
 ```python
 import serial
 import time
 
-class SIM923:
+class MyNewThermometer:
     def __init__(self, address, slot, **kwargs):
         self.address = address
         self.slot = slot
         self.serial = serial.Serial(address, baudrate=9600, timeout=1)
         
     def get_temperature(self):
-        """Read temperature from the SIM923"""
+        """Read temperature from the thermometer"""
         command = f"TVAL? {self.slot}\n"
         self.serial.write(command.encode())
         response = self.serial.readline().decode().strip()
@@ -71,19 +72,19 @@ class SIM923:
 
 ### Step 2: Create the HAL Wrapper
 
-Add a wrapper class to `fridgeos/hal/drivers/haldrivers.py`:
+Add a wrapper class to `fridgeos/fridgeos/drivers/haldrivers.py`:
 
 ```python
 # Add import at the top
-from .srs_sim923 import SIM923
+from fridgeos.drivers.my_new_thermometer import MyNewThermometer
 
 # Add wrapper class
-class SIM923Thermometer:
+class MyNewThermometer_HAL:
     def __init__(self):
         self.device = None
         
     def setup(self, address, slot, **kwargs):
-        self.device = SIM923(address=address, slot=slot, **kwargs)
+        self.device = MyNewThermometer(address=address, slot=slot, **kwargs)
         
     def get_temperature(self):
         if self.device is None:
@@ -98,7 +99,7 @@ Add your driver to the `hal_classes` dictionary in `haldrivers.py`:
 ```python
 hal_classes = {
     # ... existing drivers
-    'srs-sim923': SIM923Thermometer,
+    'my-new-thermometer': MyNewThermometer,
 }
 ```
 
@@ -108,8 +109,8 @@ Add the new driver to your TOML configuration:
 
 ```toml
 [[thermometers]]
-name = "sample_thermometer"
-hardware = "srs-sim923"
+name = "thermometer40K"
+hardware = "my-new-thermometer"
 setup.address = "/dev/ttyUSB0"
 setup.slot = 3
 ```
@@ -122,7 +123,7 @@ Test the new driver:
 from fridgeos.hal import HALClient
 
 client = HALClient()
-temp = client.get_temperature("sample_thermometer")
+temp = client.get_temperature("thermometer40K")
 print(f"Temperature: {temp} K")
 ```
 
