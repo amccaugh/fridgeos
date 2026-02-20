@@ -179,6 +179,111 @@ The CSV file should have two columns: `temperature, raw_value`. Pre-configured c
 
 This project is licensed under GPLv3. See LICENSE for details.
 
+## REST API Usage
+
+FridgeOS exposes REST APIs for both the HAL (Hardware Abstraction Layer) and State Machine servers, allowing programmatic access to temperatures, heater values, and state control.
+
+### Accessing HAL Information
+
+The HAL server runs on port **8000** and provides access to temperature readings and heater values.
+
+#### Using curl
+
+**Get all temperatures:**
+```bash
+curl http://localhost:8000/temperatures
+```
+
+**Get a specific temperature:**
+```bash
+curl http://localhost:8000/temperature/4K
+```
+
+**Get all heater values:**
+```bash
+curl http://localhost:8000/heaters/values
+```
+
+**Get server info (temperatures + heaters):**
+```bash
+curl http://localhost:8000/
+```
+
+#### Using Python
+
+```python
+import requests
+
+# Get all temperatures
+response = requests.get('http://localhost:8000/temperatures')
+temperatures = response.json()
+print(f"4K stage: {temperatures.get('4K')} K")
+
+# Get specific temperature
+response = requests.get('http://localhost:8000/temperature/1K')
+temp_1k = response.json()['1K']
+print(f"1K stage: {temp_1k} K")
+
+# Get heater values
+response = requests.get('http://localhost:8000/heaters/values')
+heaters = response.json()
+print(f"Pump heater: {heaters.get('PUMPHEATER')} V")
+```
+
+### State Machine Control
+
+The State Machine server runs on port **8001** and allows programmatic state changes.
+
+#### Using curl
+
+**Get current state:**
+```bash
+curl http://localhost:8001/state
+```
+
+**Change state (if password is required):**
+```bash
+curl -X PUT http://localhost:8001/state -H "Content-Type: application/json" -d '{"state": "recycling", "password": "your_password"}'
+```
+
+**Change state (if no password required):**
+```bash
+curl -X PUT http://localhost:8001/state  -H "Content-Type: application/json"  -d '{"state": "recycling"}'
+```
+
+#### Automated State Changes with Cron
+
+You can use cron jobs to automatically trigger state changes at scheduled times. For example, to recycle the fridge every day at 4 AM:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line (replace with your actual password if required)
+0 4 * * * curl -X PUT http://localhost:8001/state -H "Content-Type: application/json" -d '{"state": "recycling", "password": "your_password"}' > /dev/null 2>&1
+```
+
+**Note:** If your statemachine configuration doesn't require a password, omit the `"password"` field from the JSON payload.
+
+#### Using Python
+
+```python
+import requests
+
+# Get current state
+response = requests.get('http://localhost:8001/state')
+state_info = response.json()
+print(f"Current state: {state_info['current_state']}")
+
+# Change state
+response = requests.put(
+    'http://localhost:8001/state',
+    json={'state': 'recycling', 'password': 'your_password'}  # Omit password if not required
+)
+result = response.json()
+print(f"State change: {result['message']}")
+```
+
 ## Authors
 
 - Adam McCaughan (adam.mccaughan@nist.gov)
