@@ -15,7 +15,7 @@ from fridgeos.drivers.srs_sim921 import SIM921
 from fridgeos.drivers.srs_sim922 import SIM922
 from fridgeos.drivers.swarm import SwarmLockin, SwarmDiode, SwarmHighPowerHeater, SwarmLowPowerHeater, WarmupHeater
 from fridgeos.drivers.dummy import DummyThermometer, DummyHeater
-from fridgeos.drivers.CTC100 import CTC
+from fridgeos.drivers.CTC100 import CTC100Channel
 import random
 import time
 import csv
@@ -24,7 +24,7 @@ import numpy as np
 ### HEATERS
 class HAL_CTC100_Heater():
     def setup(self, address, channelname):
-        self.heater = CTC(address, channelname)
+        self.heater = CTC100Channel(address, channelname)
         
     def set_heater_value(self, value):
         self.heater.set_out(value)
@@ -96,7 +96,7 @@ class HAL_FaultyDummyHeater():
 
 class HAL_CTC100_Thermometer():
     def setup(self, address, channelname):
-        self.thermometer = CTC(address, channelname)
+        self.thermometer = CTC100Channel(address, channelname)
         
     def get_temperature(self):
         return self.thermometer.get_val()

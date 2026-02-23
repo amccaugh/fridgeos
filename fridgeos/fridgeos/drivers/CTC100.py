@@ -6,7 +6,7 @@ import time
 import sys
 
 
-class CTC(object):
+class CTC100Channel(object):
     def __init__(self, address, channelname):
         self.params = {}
         self.params["address"] = address
@@ -41,5 +41,5 @@ class CTC(object):
     
 
 # #%%
-# heater = CTC("/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00", "HP")
+# heater = CTC100Channel("/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00", "HP")
 # heater.set_out(1.3)
