@@ -8,12 +8,7 @@ import sys
 
 class CTC100Channel(object):
     def __init__(self, address, channelname):
-        self.params = {}
-        self.params["address"] = address
-        self.params["baud_rate"] = 9600
-        self.params["time_out"] = 1
-        self.serial = serial.Serial(self.params['address'],
-              baudrate=9600, timeout=1, rtscts=True)
+        self.serial = serial.Serial(self.params['address'], baudrate=9600, timeout=1, rtscts=True)
         self.channelname = channelname
         
     def write(self, msg):        
@@ -26,14 +21,14 @@ class CTC100Channel(object):
         '''Returns a message from the temperature controller'''
         return self.serial.readline().strip('\r\n'.encode())
 
-    def set_out(self, val):
+    def set_value(self, val):
         '''Sets the value of the output of an OUT channel such as HP or Out2'''
         ch_name = self.channelname.lower()
-        msg = '%s.value = %.3f'%(ch_name, val)
+        msg = f'{ch_name}.value = {val:.3f}'
         self.write(msg)
         
-    def get_val(self):
-        msg = '%s.value?'%self.channelname
+    def get_value(self):
+        msg = f'{self.channelname}.value?'
         value = float(self.write(msg))
         if value != value:  # NaN check (nan != nan is True)
             value = None
@@ -42,4 +37,4 @@ class CTC100Channel(object):
 
 # #%%
 # heater = CTC100Channel("/dev/serial/by-id/usb-uClinux_2.6.12-uc0_with_isp1161a1-dcd_SRS_PTC_10_0-if00", "HP")
-# heater.set_out(1.3)
+# heater.set_value(1.3)

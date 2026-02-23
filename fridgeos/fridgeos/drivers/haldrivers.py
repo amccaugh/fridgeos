@@ -27,10 +27,10 @@ class HAL_CTC100_Heater():
         self.heater = CTC100Channel(address, channelname)
         
     def set_heater_value(self, value):
-        self.heater.set_out(value)
+        self.heater.set_value(value)
         
     def get_heater_value(self):
-        return self.heater.get_val()
+        return self.heater.get_value()
         
 class HAL_KD3005P():
     def setup(self, address):
@@ -99,7 +99,7 @@ class HAL_CTC100_Thermometer():
         self.thermometer = CTC100Channel(address, channelname)
         
     def get_temperature(self):
-        return self.thermometer.get_val()
+        return self.thermometer.get_value()
         
         
         
