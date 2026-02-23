@@ -8,7 +8,7 @@ import sys
 
 class CTC100Channel(object):
     def __init__(self, address, channelname):
-        self.serial = serial.Serial(self.params['address'], baudrate=9600, timeout=1, rtscts=True)
+        self.serial = serial.Serial(address, baudrate=9600, timeout=1, rtscts=True)
         self.channelname = channelname
         
     def write(self, msg):        
