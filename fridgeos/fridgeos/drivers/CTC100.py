@@ -34,7 +34,10 @@ class CTC(object):
         
     def get_val(self):
         msg = '%s.value?'%self.channelname
-        return float(self.write(msg))
+        value = float(self.write(msg))
+        if value != value:  # NaN check (nan != nan is True)
+            value = None
+        return value
     
 
 # #%%
