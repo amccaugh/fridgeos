@@ -21,19 +21,19 @@ FridgeOS is easiest to use as an all-in-one set of Docker containers that run in
 
 - Clone this repository
 - Install Docker (linux recommended)
-- Create `fridgeos/fridgeos-docker/config/hal.toml` and  `fridgeos/fridgeos-docker/config/statemachine.toml`
-    - Suggested start: Copy dummy configuration files from `fridgeos/fridgeos-docker/config-examples/dummy/`
+- Create `docker/config/hal.toml` and  `docker/config/statemachine.toml`
+    - Suggested start: Copy dummy configuration files from `docker/config-examples/dummy/`
     - Other example configurations are there as well
 - Start fridgeos:
 
 ```bash
-cd fridgeos-docker
+cd docker
 docker-compose up -d
 ```
 - Wait ~1 minute for it to build (only the first time)
 - Visit http://localhost:3000/d/cryostat-temps/cryostat-temperature-dashboard (Grafana temperature & state plots, username/password=`admin`/`admin`)
 - Visit http://localhost:8000/ (state and heater control)
-- Logs are available at `fridgeos/fridgeos-docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
+- Logs are available at `docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
 
 ## Architecture overview
 
@@ -47,7 +47,7 @@ This tutorial shows how to add support for a new hardware device (e.g., SRS SIM9
 
 ### Step 1: Create the Hardware Driver
 
-Create a new driver file in `fridgeos/fridgeos/drivers/`. For example, `my_new_thermometer.py`:
+Create a new driver file in `fridgeos/drivers/`. For example, `my_new_thermometer.py`:
 
 ```python
 import serial
@@ -72,7 +72,7 @@ class MyNewThermometer:
 
 ### Step 2: Create the HAL Wrapper
 
-Add a wrapper class to `fridgeos/fridgeos/drivers/haldrivers.py`:
+Add a wrapper class to `fridgeos/drivers/haldrivers.py`:
 
 ```python
 # Add import at the top
@@ -173,7 +173,7 @@ conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv"
 setup.address = "/dev/ttyUSB0"
 ```
 
-The CSV file should have two columns: `temperature, raw_value`. Pre-configured curves are available in `fridgeos/fridgeos/calibration-curves/`.
+The CSV file should have two columns: `temperature, raw_value`. Pre-configured curves are available in `fridgeos/calibration-curves/`.
 
 ## License
 

@@ -91,5 +91,5 @@ target/
 .vscode/
 
 # Configuration files
-fridgeos-docker/config/*
-!fridgeos-docker/config/0-place-config-files-here.txt
+docker/config/*
+!docker/config/0-place-config-files-here.txt

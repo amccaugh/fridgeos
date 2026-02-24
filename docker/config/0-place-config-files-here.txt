@@ -1,0 +1,6 @@
+docker requires there to be the following files:
+
+docker/config/hal.toml
+docker/config/statemachine.toml
+
+You can use the files from docker/config-examples/

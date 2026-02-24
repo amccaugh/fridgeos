@@ -59,7 +59,7 @@ services:
   hal:
     build:
       context: ..
-      dockerfile: fridgeos-docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: hal-server
     privileged: true
     volumes:
@@ -86,7 +86,7 @@ services:
   statemachine:
     build:
       context: ..
-      dockerfile: fridgeos-docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: statemachine-server
     volumes:
       - ./logs:/app/logs/
@@ -109,7 +109,7 @@ services:
   database-scraper:
     build:
       context: ..
-      dockerfile: fridgeos-docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: database-scraper
     volumes:
       - ./logs:/app/logs/
