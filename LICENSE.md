@@ -1,5 +1,5 @@
 This file is part of fridgeos
-Copyright (C) 2025 by Adam McCaughan
+Copyright (C) 2026 by Adam McCaughan
 
 # GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
