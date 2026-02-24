@@ -13,6 +13,9 @@ class CTC100Channel(object):
         
     def write(self, msg):        
         '''Write a message to the temperature controller and return response'''
+        # Flush any stale data in the input & output buffers
+        self.serial.reset_output_buffer()
+        self.serial.reset_input_buffer()
         self.serial.write((msg+'\r\n').encode())
         msgout = self.serial.readline().strip(str.encode('\r\n'))
         return msgout

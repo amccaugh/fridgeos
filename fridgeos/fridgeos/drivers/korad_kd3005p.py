@@ -14,6 +14,8 @@ class KD3005P(object):
         return self.serial.readline().strip().decode('utf-8')
 
     def write(self, string):
+        self.serial.reset_output_buffer()
+        self.serial.reset_input_buffer()
         write_string = string + '\n'
         self.serial.write(write_string.encode('utf-8'))
 
