@@ -65,7 +65,7 @@ services:
     volumes:
       - ./logs:/app/logs/
       - /dev/serial:/dev/serial
-      - ../fridgeos:/app/fridgeos-src:ro
+      - ..:/app/fridgeos-src:ro
       - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
     working_dir: /app
@@ -90,7 +90,7 @@ services:
     container_name: statemachine-server
     volumes:
       - ./logs:/app/logs/
-      - ../fridgeos:/app/fridgeos-src:ro
+      - ..:/app/fridgeos-src:ro
       - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
     working_dir: /app
@@ -113,7 +113,7 @@ services:
     container_name: database-scraper
     volumes:
       - ./logs:/app/logs/
-      - ../fridgeos:/app/fridgeos-src:ro
+      - ..:/app/fridgeos-src:ro
       - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
     working_dir: /app
