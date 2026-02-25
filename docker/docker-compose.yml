@@ -46,6 +46,9 @@ services:
       - GF_DATABASE_USER=grafana
       - GF_DATABASE_PASSWORD=grafana123
       - GF_DATABASE_SSL_MODE=disable
+      # Allow viewing dashboards without logging in (Viewer role)
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     ports:
       - "3000:3000"
     volumes:
@@ -61,7 +64,7 @@ services:
   hal:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: hal-server
     privileged: true
     volumes:
@@ -88,7 +91,7 @@ services:
   statemachine:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: statemachine-server
     volumes:
       - ./logs:/app/logs/
@@ -111,7 +114,7 @@ services:
   database-scraper:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     container_name: database-scraper
     volumes:
       - ./logs:/app/logs/
