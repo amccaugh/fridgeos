@@ -6,7 +6,6 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 
 <img width="2531" height="1460" alt="image" src="https://github.com/user-attachments/assets/717eb5ce-fa33-4d19-be51-fa624c266a1c" />
 
-
 ## Features
 
 - **Real-time monitoring**: Live Grafana-based temperature and heater monitoring with standardized PostgreSQL database
@@ -14,6 +13,18 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 - **Web-based interface**: Simply use your web browser to view historical data, control heaters, change state, and more
 - **Docker support**: Always-on architecture that recovers quickly and easily in the event of a crash
 - **Extensible driver system**: Support for basic thermometer and heating systems (e.g SRS CTC100, SRS SIM921, Lakeshore, etc) and custom hardware is simple to add
+
+
+## Table of contents
+
+- [Quickstart](#quickstart)
+- [Architecture overview](#architecture-overview)
+- [Thermometer calibration & conversion](#thermometer-calibration--conversion)
+- [Database backup and restore](#database-backup-and-restore)
+- [Adding new hardware drivers](#adding-new-hardware-drivers)
+- [Driver interface requirements](#driver-interface-requirements)
+- [REST API usage](#rest-api-usage)
+
 
 ## Quickstart
 
@@ -283,6 +294,21 @@ response = requests.put(
 result = response.json()
 print(f"State change: {result['message']}")
 ```
+
+## Database backup and restore
+
+The PostgreSQL database runs in Docker; you can backup and restore it easily:
+
+**Backup:**
+```bash
+docker exec -e PGPASSWORD=grafana123 postgres-db pg_dump -U grafana -d fridgedb -Fc > backup.dump
+```
+
+**Restore:**
+```bash
+docker exec -i -e PGPASSWORD=grafana123 postgres-db pg_restore -U grafana -d fridgedb --clean --if-exists < backup.dump
+```
+(Note you may get some warnings but they can be safely ignored)
 
 ## Authors
 
