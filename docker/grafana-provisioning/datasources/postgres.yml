@@ -5,7 +5,7 @@ datasources:
     uid: fridgeos-postgres
     orgId: 1
     version: 2
-    type: postgres
+    type: grafana-postgresql-datasource
     access: proxy
     url: postgres:5432
     database: fridgedb

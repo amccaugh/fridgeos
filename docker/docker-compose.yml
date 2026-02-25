@@ -40,13 +40,6 @@ services:
     image: grafana/grafana:latest
     container_name: grafana-app
     environment:
-      - GF_DATABASE_TYPE=postgres
-      - GF_DATABASE_HOST=postgres:5432
-      - GF_DATABASE_NAME=fridgedb
-      - GF_DATABASE_USER=grafana
-      - GF_DATABASE_PASSWORD=grafana123
-      - GF_DATABASE_SSL_MODE=disable
-      # Allow viewing dashboards without logging in (Viewer role)
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     ports:
