@@ -310,13 +310,9 @@ Do this from the `docker/` directory (so `docker compose` works). Replace `/MY/B
 
 ```bash
 docker compose down
-docker volume rm fridgeos_postgres_data
-docker volume create fridgeos_postgres_data
-docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v /MY/BACKUPDIR:/backup timescale/timescaledb-ha:pg17 bash -c "mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/fridgeos-db-backup.tar.gz && chown -R postgres:postgres /pgdata"
-docker compose up -d postgres
+docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v /MY/BACKUPDIR:/backup timescale/timescaledb-ha:pg17 bash -c "find /pgdata -mindepth 1 -delete && mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/fridgeos-db-backup.tar.gz && chown -R postgres:postgres /pgdata"
+docker compose up -d
 ```
-(Use your folder path instead of `/home/me/backups`.)
-
 
 ## Authors
 
