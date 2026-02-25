@@ -297,18 +297,22 @@ print(f"State change: {result['message']}")
 
 ## Database backup and restore
 
-The PostgreSQL database runs in Docker; you can backup and restore it easily:
+The PostgreSQL (with TimescaleDB) database runs in Docker. Use `pg_basebackup` for efficient physical backups:
 
 **Backup:**
 ```bash
-docker exec -e PGPASSWORD=grafana123 postgres-db pg_dump -U grafana -d fridgedb -Fc > backup.dump
+docker exec -e PGPASSWORD=grafana123 postgres-db pg_basebackup -U grafana -D - -Ft -X fetch -P | gzip > db-basebackup.tar.gz
 ```
 
 **Restore:**
 ```bash
-docker exec -i -e PGPASSWORD=grafana123 postgres-db pg_restore -U grafana -d fridgedb --clean --if-exists < backup.dump
+docker compose down
+docker volume rm fridgeos_postgres-data
+docker volume create fridgeos_postgres-data
+docker run --rm -v fridgeos_postgres-data:/var/lib/postgresql/data -v $(pwd):/backup alpine sh -c "cd /var/lib/postgresql/data && tar xzf /backup/db-basebackup.tar.gz"
+docker compose up -d postgres-db
 ```
-(Note you may get some warnings but they can be safely ignored)
+
 
 ## Authors
 
