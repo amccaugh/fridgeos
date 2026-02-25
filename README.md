@@ -307,10 +307,10 @@ docker exec -e PGPASSWORD=grafana123 postgres-db pg_basebackup -U grafana -D - -
 **Restore:**
 ```bash
 docker compose down
-docker volume rm fridgeos_postgres-data
-docker volume create fridgeos_postgres-data
-docker run --rm -v fridgeos_postgres-data:/var/lib/postgresql/data -v $(pwd):/backup alpine sh -c "cd /var/lib/postgresql/data && tar xzf /backup/db-basebackup.tar.gz"
-docker compose up -d postgres-db
+docker volume rm fridgeos_postgres_data
+docker volume create fridgeos_postgres_data
+docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v $(pwd):/backup timescale/timescaledb-ha:pg17 bash -c "mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/db-basebackup.tar.gz && chown -R postgres:postgres /pgdata"
+docker compose up -d postgres
 ```
 
 

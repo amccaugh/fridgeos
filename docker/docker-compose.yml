@@ -1,3 +1,5 @@
+name: fridgeos
+
 services:
   postgres:
     image: timescale/timescaledb-ha:pg17
@@ -59,7 +61,7 @@ services:
   hal:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: hal-server
     privileged: true
     volumes:
@@ -86,7 +88,7 @@ services:
   statemachine:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: statemachine-server
     volumes:
       - ./logs:/app/logs/
@@ -109,7 +111,7 @@ services:
   database-scraper:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: database-scraper
     volumes:
       - ./logs:/app/logs/
