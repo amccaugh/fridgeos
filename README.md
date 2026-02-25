@@ -305,13 +305,17 @@ docker exec -e PGPASSWORD=grafana123 postgres-db pg_basebackup -U grafana -D - -
 ```
 
 **Restore:**
+
+Do this from the `docker/` directory (so `docker compose` works). Replace `/MY/BACKUPDIR` with the directory that holds `fridgeos-db-backup.tar.gz`
+
 ```bash
 docker compose down
 docker volume rm fridgeos_postgres_data
 docker volume create fridgeos_postgres_data
-docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v $(pwd):/backup timescale/timescaledb-ha:pg17 bash -c "mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/fridgeos-db-backup.tar.gz && chown -R postgres:postgres /pgdata"
+docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v /MY/BACKUPDIR:/backup timescale/timescaledb-ha:pg17 bash -c "mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/fridgeos-db-backup.tar.gz && chown -R postgres:postgres /pgdata"
 docker compose up -d postgres
 ```
+(Use your folder path instead of `/home/me/backups`.)
 
 
 ## Authors
