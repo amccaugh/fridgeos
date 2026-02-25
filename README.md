@@ -301,7 +301,7 @@ The PostgreSQL (with TimescaleDB) database runs in Docker. Use `pg_basebackup` f
 
 **Backup:**
 ```bash
-docker exec -e PGPASSWORD=grafana123 postgres-db pg_basebackup -U grafana -D - -Ft -X fetch -P | gzip > db-basebackup.tar.gz
+docker exec -e PGPASSWORD=grafana123 postgres-db pg_basebackup -U grafana -D - -Ft -X fetch -P | gzip > fridgeos-db-backup.tar.gz
 ```
 
 **Restore:**
@@ -309,7 +309,7 @@ docker exec -e PGPASSWORD=grafana123 postgres-db pg_basebackup -U grafana -D - -
 docker compose down
 docker volume rm fridgeos_postgres_data
 docker volume create fridgeos_postgres_data
-docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v $(pwd):/backup timescale/timescaledb-ha:pg17 bash -c "mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/db-basebackup.tar.gz && chown -R postgres:postgres /pgdata"
+docker run --rm --user root -v fridgeos_postgres_data:/pgdata -v $(pwd):/backup timescale/timescaledb-ha:pg17 bash -c "mkdir -p /pgdata/data && cd /pgdata/data && tar xzf /backup/fridgeos-db-backup.tar.gz && chown -R postgres:postgres /pgdata"
 docker compose up -d postgres
 ```
 
