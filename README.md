@@ -23,7 +23,7 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 - [Driver interface requirements](#driver-interface-requirements)
 - [Thermometer calibration & conversion](#thermometer-calibration--conversion)
 - [License](#license)
-- [REST API Usage](#rest-api-usage)
+- [REST API usage](#rest-api-usage)
 - [Database backup and restore](#database-backup-and-restore)
 
 
