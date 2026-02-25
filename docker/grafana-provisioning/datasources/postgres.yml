@@ -2,6 +2,9 @@ apiVersion: 1
 
 datasources:
   - name: PostgreSQL
+    uid: fridgeos-postgres
+    orgId: 1
+    version: 2
     type: postgres
     access: proxy
     url: postgres:5432
@@ -10,8 +13,9 @@ datasources:
     secureJsonData:
       password: grafana123
     jsonData:
+      # Grafana 12.2+ expects the default DB name here (top-level `database:` is ignored)
+      database: fridgedb
       sslmode: disable
       postgresVersion: 1500
       timescaledb: true
     isDefault: true
-    editable: true
