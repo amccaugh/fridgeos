@@ -5,8 +5,6 @@
 FridgeOS is a modular control system designed for cryogenic refrigeration systems. It allows or temperature sensors and heaters, along with monitoring, data logging, and state machine capabilities.
 
 <img width="2531" height="1460" alt="image" src="https://github.com/user-attachments/assets/717eb5ce-fa33-4d19-be51-fa624c266a1c" />
-
-
 ## Features
 
 - **Real-time monitoring**: Live Grafana-based temperature and heater monitoring with standardized PostgreSQL database
@@ -14,6 +12,19 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 - **Web-based interface**: Simply use your web browser to view historical data, control heaters, change state, and more
 - **Docker support**: Always-on architecture that recovers quickly and easily in the event of a crash
 - **Extensible driver system**: Support for basic thermometer and heating systems (e.g SRS CTC100, SRS SIM921, Lakeshore, etc) and custom hardware is simple to add
+
+
+## Table of contents
+
+- [Quickstart](#quickstart)
+- [Architecture overview](#architecture-overview)
+- [Adding New Hardware Drivers](#adding-new-hardware-drivers)
+- [Driver Interface Requirements](#driver-interface-requirements)
+- [Thermometer calibration & conversion](#thermometer-calibration--conversion)
+- [License](#license)
+- [REST API Usage](#rest-api-usage)
+- [Database backup and restore](#database-backup-and-restore)
+
 
 ## Quickstart
 
