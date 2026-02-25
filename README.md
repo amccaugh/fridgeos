@@ -284,6 +284,21 @@ result = response.json()
 print(f"State change: {result['message']}")
 ```
 
+## Database backup and restore
+
+The PostgreSQL database runs in Docker; you can backup and restore it easily:
+
+**Backup:**
+```bash
+docker exec -e PGPASSWORD=grafana123 postgres-db pg_dump -U grafana -d fridgedb -Fc > backup.dump
+```
+
+**Restore:**
+```bash
+docker exec -i -e PGPASSWORD=grafana123 postgres-db pg_restore -U grafana -d fridgedb --clean --if-exists < backup.dump
+```
+(Note you may get some warnings but they can be safely ignored)
+
 ## Authors
 
 - Adam McCaughan (adam.mccaughan@nist.gov)
