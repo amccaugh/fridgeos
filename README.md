@@ -297,7 +297,7 @@ print(f"State change: {result['message']}")
 
 ## Database backup and restore
 
-The PostgreSQL (with TimescaleDB) database runs in Docker. Use `pg_basebackup` for efficient physical backups:
+The PostgreSQL (with TimescaleDB) database runs in Docker. Use the following commands to backup it up or restore it.
 
 **Backup:**
 ```bash
