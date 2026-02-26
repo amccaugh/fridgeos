@@ -37,7 +37,7 @@ services:
       start_period: 30s
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.4
     container_name: grafana-app
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
