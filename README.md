@@ -32,6 +32,8 @@ FridgeOS is easiest to use as an all-in-one set of Docker containers that run in
 
 - Clone this repository
 - Install Docker (linux recommended)
+    - In Ubuntu, add your user to the `docker` group: `sudo usermod -aG docker $USER`
+    - In Ubuntu, also add your user to the `dialout` group so docker has serial/USB port access: `sudo usermod -aG dialout $USER`
 - Create `docker/config/hal.toml` and  `docker/config/statemachine.toml`
     - Suggested start: Copy dummy configuration files from `docker/config-examples/dummy/`
     - Other example configurations are there as well
