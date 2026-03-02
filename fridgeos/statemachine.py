@@ -59,6 +59,8 @@ class StateMachineServer:
         # Load constants and settings
         self.constants = self._load_constants(config_path)
         self.settings = self._load_settings(config_path)
+        self.num_consecutive_datapoints_to_transition = self._load_num_consecutive_datapoints_to_transition()
+        self._transition_success_streaks: Dict[int, int] = {}
         
         # Load password from settings if configured
         self.required_password = self.settings.get('state_change_password')
@@ -115,6 +117,26 @@ class StateMachineServer:
         settings = config.get('settings', {})
         self.logger.debug(f"Loaded settings: {settings}")
         return settings
+
+    def _load_num_consecutive_datapoints_to_transition(self) -> int:
+        raw_value = self.settings.get('num_consecutive_datapoints_to_transition', 1)
+        try:
+            value = int(raw_value)
+        except (TypeError, ValueError):
+            self.logger.warning(
+                "Invalid settings.num_consecutive_datapoints_to_transition=%r; defaulting to 1",
+                raw_value,
+            )
+            return 1
+
+        if value < 1:
+            self.logger.warning(
+                "settings.num_consecutive_datapoints_to_transition=%r is < 1; defaulting to 1",
+                raw_value,
+            )
+            return 1
+
+        return value
     
     def _start_state_machine_loop(self):
         if self.state_machine_thread is None or not self.state_machine_thread.is_alive():
@@ -580,7 +602,7 @@ class StateMachineServer:
         transitions = config.get('transitions', [])
         parsed = []
         state_timeouts = {}
-        for t in transitions:
+        for transition_id, t in enumerate(transitions):
             criteria_list = []
             for crit in t.get('criteria', []):
                 # Parse criterion with constants support
@@ -592,6 +614,7 @@ class StateMachineServer:
                 from_states = [from_states]  # Convert single string to list
             
             parsed.append({
+                '_id': transition_id,
                 'from': from_states,
                 'to': t['to'],
                 'criteria': criteria_list
@@ -774,11 +797,8 @@ class StateMachineServer:
                 # Store the value for the update_heaters method to use
                 heater_config['current_value'] = value
 
-    def _check_criterion(self, criterion):
+    def _check_criterion(self, criterion, current_temperatures):
         # check if the temperature criterion is met
-        current_temperatures = self.hal_client.get_temperatures()
-        self.last_temperature_update = time.time()
-        self.last_temperature_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if criterion['sensor'] not in current_temperatures:
             self.logger.error(f'No sensor named {criterion["sensor"]} in temperature listing: {current_temperatures}')
             return False
@@ -803,14 +823,44 @@ class StateMachineServer:
             self.logger.debug('PAUSED state - no automatic transitions allowed')
             return None
         
+        current_temperatures = self.hal_client.get_temperatures()
+        self.current_temperatures = current_temperatures
+        self.last_temperature_update = now
+        self.last_temperature_update_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        required_consecutive = self.num_consecutive_datapoints_to_transition
+
         for t in self.criteria:
             if self.current_state in t['from']:
                 self.logger.debug(f'Checking transition: {self.current_state}->{t["to"]}')
                 timeout = self.state_timeouts.get((self.current_state, t['to']))
-                # Check if all criteria are met
-                if all(self._check_criterion(c) for c in t['criteria']):
-                    self.logger.info(f'Transition criteria met for {self.current_state} to {t["to"]}')
-                    return t
+                # Check if all criteria are met (single temperature snapshot per polling interval)
+                criteria_met = all(self._check_criterion(c, current_temperatures) for c in t['criteria'])
+                if criteria_met:
+                    transition_id = t.get('_id')
+                    if transition_id is None:
+                        # Fallback for legacy transition objects (shouldn't happen with current loader)
+                        transition_id = id(t)
+                    new_streak = self._transition_success_streaks.get(transition_id, 0) + 1
+                    self._transition_success_streaks[transition_id] = new_streak
+
+                    if new_streak >= required_consecutive:
+                        self.logger.info(
+                            f'Transition criteria met for {self.current_state} to {t["to"]} '
+                            f'({new_streak}/{required_consecutive} consecutive datapoints)'
+                        )
+                        return t
+                    else:
+                        self.logger.debug(
+                            f'Transition criteria met for {self.current_state} to {t["to"]} '
+                            f'but only {new_streak}/{required_consecutive} consecutive datapoints so far'
+                        )
+                else:
+                    transition_id = t.get('_id')
+                    if transition_id is None:
+                        transition_id = id(t)
+                    if self._transition_success_streaks.get(transition_id, 0) != 0:
+                        self._transition_success_streaks[transition_id] = 0
                 # Check if timeout is exceeded
                 if timeout is not None and now - self.state_entry_time > timeout:
                     self.logger.info(f'Transition timeout exceeded for {self.current_state} to {t["to"]} after {timeout}s')
@@ -833,6 +883,7 @@ class StateMachineServer:
         self.logger.info(f'Transitioning from {self.current_state} to {new_state}')
         self.current_state = new_state
         self.state_entry_time = time.time()
+        self._transition_success_streaks.clear()
         self.update_heater_setpoints(new_state)
         return True
     

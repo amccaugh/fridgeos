@@ -1,6 +1,7 @@
 [settings]
 fridge_name = "dummy"
 polling_interval = 1.0    # How often to read temperatures from the HAL
+# num_consecutive_datapoints_to_transition = 3  # Require N consecutive readings before a transition
 
 [constants]  # Values that can be used as criteria for transitions
 T_switch_high = 20
