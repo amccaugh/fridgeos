@@ -542,7 +542,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Cryostat Temperature Dashboard",
+  "title": "FridgeOS Cryostat Dashboard",
   "uid": "cryostat-temps",
   "version": 1
 }
