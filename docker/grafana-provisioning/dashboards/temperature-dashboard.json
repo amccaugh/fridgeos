@@ -527,6 +527,23 @@
       ],
       "title": "System State Timeline",
       "type": "state-timeline"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 6,
+      "options": {
+        "content": "<div style=\"text-align: center; opacity: 0.6;\">\n  <a href=\"https://github.com/amccaugh/fridgeos\" target=\"_blank\" style=\"color: inherit;\">FridgeOS</a> by Adam McCaughan\n</div>",
+        "mode": "html"
+      },
+      "transparent": true,
+      "title": "",
+      "type": "text"
     }
   ],
   "refresh": "5m",
