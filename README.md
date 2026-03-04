@@ -2,7 +2,7 @@
 
 **Robust, easy-to-use control software for cryostats**
 
-FridgeOS is a modular control system designed for cryogenic refrigeration systems. It allows or temperature sensors and heaters, along with monitoring, data logging, and state machine capabilities.
+FridgeOS is a modular control system designed for cryogenic refrigeration systems. It reads and controls temperature sensors and heaters, and provides monitoring, data logging, and state machine capabilities.
 
 <img width="2531" height="1460" alt="image" src="https://github.com/user-attachments/assets/717eb5ce-fa33-4d19-be51-fa624c266a1c" />
 
