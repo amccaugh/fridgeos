@@ -562,6 +562,29 @@ class StateMachineServer:
             self.server_thread.start()
             print(f'State Machine Server started on port {self.port}')
     
+    def _parse_value(self, value_str, constants=None):
+        """
+        Parse a value string, resolving constants and extracting numbers from unit strings.
+        """
+        if constants is None:
+            constants = {}
+        
+        # Check if value is a constant reference
+        if value_str in constants:
+            value = constants[value_str]
+        else:
+            value = value_str
+        
+        # If value is a string, try to extract the numeric part (e.g., "30 K" -> 30.0)
+        if isinstance(value, str):
+            numeric_str = value.rstrip(" kK")
+            try:
+                return float(numeric_str)
+            except ValueError:
+                raise ValueError(f"Could not parse value: {value}")
+        
+        return float(value)
+
     def _parse_criterion(self, crit, constants=None):
         """
         Parse a single criterion string into a dict with sensor, operator function, and value.
@@ -573,11 +596,7 @@ class StateMachineServer:
         if len(parts) == 3:
             sensor, op, value_str = parts
             
-            # Check if value is a constant reference
-            if value_str in constants:
-                value = constants[value_str]
-            else:
-                value = float(value_str)
+            value = self._parse_value(value_str, constants)
             
             # Map op string to function
             if op == '<':  op_func = operator.lt
