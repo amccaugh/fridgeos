@@ -238,6 +238,28 @@ class HALServer:
         else:
             return self.hardware[hardware_type][name]['python_object']
     
+    def _resolve_calibration_path(self, csv_spec):
+        """Resolve a conversion_csv value to an absolute file path.
+
+        If csv_spec is already an absolute path, return it directly.
+        Otherwise treat it as a bare filename and search
+        calibration-curves/custom/ first, then calibration-curves/default/.
+        """
+        if os.path.isabs(csv_spec):
+            return csv_spec
+
+        base_dir = os.path.join(os.path.dirname(__file__), 'calibration-curves')
+        for subdir in ('custom', 'default'):
+            candidate = os.path.join(base_dir, subdir, csv_spec)
+            if os.path.isfile(candidate):
+                self.logger.debug(f"Resolved calibration curve '{csv_spec}' -> {candidate}")
+                return candidate
+
+        raise FileNotFoundError(
+            f"Calibration curve '{csv_spec}' not found in "
+            f"{os.path.join(base_dir, 'custom')} or {os.path.join(base_dir, 'default')}"
+        )
+
     def _load_calibration_curve(self, csv_path):
         """ Load a calibration curve from a CSV file and cache it """
         if csv_path in self.calibration_curves:
@@ -331,9 +353,9 @@ class HALServer:
         try:
             temp = hw.get_temperature()
 
-            # Check if this thermometer has a conversion_csv property for calibration
             if 'conversion_csv' in self.hardware['thermometers'][name]:
-                csv_path = self.hardware['thermometers'][name]['conversion_csv']
+                csv_spec = self.hardware['thermometers'][name]['conversion_csv']
+                csv_path = self._resolve_calibration_path(csv_spec)
                 self.logger.debug(f"Applying calibration conversion for {name} using {csv_path}")
                 temp = self._apply_calibration(temp, csv_path)
 

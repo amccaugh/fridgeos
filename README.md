@@ -182,11 +182,11 @@ Any thermometer can use the `conversion_csv` property to convert raw sensor read
 [[thermometers]]
 name = "1K"
 hardware = "swarm_diode"
-conversion_csv = "/app/fridgeos-src/fridgeos/calibration-curves/DC-2014.csv"
+conversion_csv = "DC-2014.csv"
 setup.address = "/dev/ttyUSB0"
 ```
 
-The CSV file should have two columns: `temperature, raw_value`. Pre-configured curves are available in `fridgeos/calibration-curves/`.
+The CSV file should have two columns: `temperature, raw_value`. Pre-configured curves are in `fridgeos/calibration-curves/default/`. To override a curve, place a file with the same name in `fridgeos/calibration-curves/custom/` — custom curves take priority over default ones.
 
 ## License
 
