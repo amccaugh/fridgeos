@@ -73,9 +73,11 @@ class StateMachineServer:
         self.logger.info(f'Using polling interval: {polling_interval}')
         self.polling_interval = self.settings.get('polling_interval', polling_interval)
         self.hal_client = hal_client
+        self._saved_state_path = os.path.join(log_path, 'saved_state.json')
         
-        # Set the first state as the initial state
-        self.current_state = list(self.states.keys())[0]    
+        # Restore previous state if available, otherwise use first defined state
+        restored = self._load_saved_state()
+        self.current_state = restored if restored else list(self.states.keys())[0]
         self.state_entry_time = time.time()
         self.current_temperatures = {}
         self.current_heater_values = {}
@@ -84,11 +86,15 @@ class StateMachineServer:
         self.update_num = 0  # Counter for HAL updates
         self.state_machine_thread: Optional[threading.Thread] = None
         
-        self.logger.info(f"State Machine initialized. Initial state: {self.current_state}")
+        if restored:
+            self.logger.info(f"State Machine initialized. Resumed saved state: {self.current_state}")
+        else:
+            self.logger.info(f"State Machine initialized. Starting in default state: {self.current_state}")
         self.logger.debug(f"Loaded {len(self.criteria)} transitions, {len(self.heaters)} heaters, {len(self.states)} states")
         
-        # Set heater setpoints for the initial state
+        # Set heater setpoints for the initial state and persist it
         self.update_heater_setpoints(self.current_state)
+        self._save_state()
         
         self.logger.info(f"Starting up server")
         try:
@@ -885,6 +891,36 @@ class StateMachineServer:
             self.make_transition(new_state)
         return False
 
+    def _save_state(self):
+        """Persist the current state to disk so it survives container restarts."""
+        try:
+            payload = {
+                'state': self.current_state,
+                'timestamp': time.time(),
+            }
+            with open(self._saved_state_path, 'w') as f:
+                json.dump(payload, f)
+            self.logger.debug(f"Saved state '{self.current_state}' to {self._saved_state_path}")
+        except Exception as e:
+            self.logger.warning(f"Failed to save state to {self._saved_state_path}: {e}")
+
+    def _load_saved_state(self):
+        """Load a previously saved state from disk, or return None."""
+        try:
+            with open(self._saved_state_path, 'r') as f:
+                payload = json.load(f)
+            saved = payload.get('state')
+            if saved and saved in self.states:
+                self.logger.info(f"Found saved state '{saved}' on disk")
+                return saved
+            elif saved:
+                self.logger.warning(f"Saved state '{saved}' is no longer valid, ignoring")
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            self.logger.warning(f"Could not read saved state from {self._saved_state_path}: {e}")
+        return None
+
     def make_transition(self, new_state):
         """ Force a transition to the given state, only if it is a valid state. """
         if new_state not in self.states:
@@ -895,6 +931,7 @@ class StateMachineServer:
         self.state_entry_time = time.time()
         self._transition_success_streaks.clear()
         self.update_heater_setpoints(new_state)
+        self._save_state()
         return True
     
     def pause_system(self):
