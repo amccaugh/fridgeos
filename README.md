@@ -28,25 +28,25 @@ FridgeOS is a modular control system designed for cryogenic refrigeration system
 
 ## Quickstart
 
-FridgeOS is easiest to use as an all-in-one set of Docker containers that run independently and restart automatically if anything bad happens.  You can even test out its functionality without thermometer/heater hardware using a dummy configuration:
+FridgeOS is easiest to use as an all-in-one set of Docker containers that run independently and restart automatically if anything bad happens (linux/Ubuntu recommended).  You can even test out its functionality without thermometer/heater hardware using a dummy configuration:
 
-- Clone this repository
-- Install Docker (linux recommended)
-    - In Ubuntu, add your user to the `docker` group: `sudo usermod -aG docker $USER`
-    - In Ubuntu, also add your user to the `dialout` group so docker has serial/USB port access: `sudo usermod -aG dialout $USER`
-- Create `docker/config/hal.toml` and  `docker/config/statemachine.toml`
-    - Suggested start: Copy dummy configuration files from `docker/config-examples/dummy/`
+- Clone this repository `git clone https://github.com/amccaugh/fridgeos.git`
+- Install Docker
+    - Add your user to the `docker` group: `sudo usermod -aG docker $USER`
+    - Also add your user to the `dialout` group so docker has serial/USB port access: `sudo usermod -aG dialout $USER`
+- Create `fridgeos/docker/config/hal.toml` and  `fridgeos/docker/config/statemachine.toml`
+    - Suggested start: Copy dummy configuration files from `fridgeos/docker/config-examples/dummy/`
     - Other example configurations are there as well
 - Start fridgeos:
 
 ```bash
-cd docker
+cd fridgeos/docker/
 docker-compose up -d
 ```
 - Wait ~1 minute for it to build (only the first time)
-- Visit http://localhost:3000/d/cryostat-temps/cryostat-temperature-dashboard (Grafana temperature & state plots, username/password=`admin`/`admin`)
+- Visit http://localhost:3000/ (Grafana temperature & state plots, default username/password=`admin`/`admin`)
 - Visit http://localhost:8000/ (state and heater control)
-- Logs are available at `docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
+- Logs are available at `fridgeos/docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
 
 ## Architecture overview
 
