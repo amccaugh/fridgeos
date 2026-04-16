@@ -47,6 +47,7 @@ docker compose up -d
 - Visit http://localhost:3000/ (Grafana temperature & state plots, default username/password=`admin`/`admin`)
 - Visit http://localhost:8000/ (state and heater control)
 - Logs are available at `fridgeos/docker/logs/`, separated out into informational, error, and debug logs for the HAL (hardware) and statemachine
+- Whenever you change the `.toml` config files, just `docker compose restart` to load the updated configurations
 
 ## Architecture overview
 
