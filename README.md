@@ -41,7 +41,7 @@ FridgeOS is easiest to use as an all-in-one set of Docker containers that run in
 
 ```bash
 cd fridgeos/docker/
-docker-compose up -d
+docker compose up -d
 ```
 - Wait ~1 minute for it to build (only the first time)
 - Visit http://localhost:3000/ (Grafana temperature & state plots, default username/password=`admin`/`admin`)
