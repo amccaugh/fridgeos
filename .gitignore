@@ -6,6 +6,7 @@ docs/_build
 .*.swp
 *secrets.toml
 docker/logs/saved_state.json
+fridgeos/calibration-curves/downloaded/
 
 
 

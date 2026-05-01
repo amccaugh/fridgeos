@@ -241,14 +241,20 @@ class HALServer:
     def _resolve_calibration_path(self, csv_spec):
         """Resolve a conversion_csv value to an absolute file path.
 
+        If csv_spec is an http(s) URL, download the file once into
+        calibration-curves/downloaded/ and return that cached path.
         If csv_spec is already an absolute path, return it directly.
         Otherwise treat it as a bare filename and search
         calibration-curves/custom/ first, then calibration-curves/default/.
         """
+        base_dir = os.path.join(os.path.dirname(__file__), 'calibration-curves')
+
+        if isinstance(csv_spec, str) and csv_spec.startswith(('http://', 'https://')):
+            return self._download_calibration_url(csv_spec, base_dir)
+
         if os.path.isabs(csv_spec):
             return csv_spec
 
-        base_dir = os.path.join(os.path.dirname(__file__), 'calibration-curves')
         for subdir in ('custom', 'default'):
             candidate = os.path.join(base_dir, subdir, csv_spec)
             if os.path.isfile(candidate):
@@ -259,6 +265,47 @@ class HALServer:
             f"Calibration curve '{csv_spec}' not found in "
             f"{os.path.join(base_dir, 'custom')} or {os.path.join(base_dir, 'default')}"
         )
+
+    def _download_calibration_url(self, url, base_dir):
+        """Download a calibration CSV from a URL into a local cache directory.
+
+        The file is cached on disk so it can be reused across restarts and so
+        the existing csv_path-based caching in _load_calibration_curve works
+        unchanged. If the file already exists locally, it is returned without
+        re-downloading.
+        """
+        download_dir = os.path.join(base_dir, 'downloaded')
+        os.makedirs(download_dir, exist_ok=True)
+
+        # Build a stable, filesystem-safe filename from the URL. We hash the
+        # URL to avoid collisions while keeping a human-readable basename.
+        import hashlib
+        from urllib.parse import urlparse, unquote
+        parsed = urlparse(url)
+        url_basename = os.path.basename(unquote(parsed.path)) or 'curve.csv'
+        if not url_basename.lower().endswith('.csv'):
+            url_basename += '.csv'
+        url_hash = hashlib.sha1(url.encode('utf-8')).hexdigest()[:8]
+        cached_name = f"{url_hash}_{url_basename}"
+        cached_path = os.path.join(download_dir, cached_name)
+
+        if os.path.isfile(cached_path):
+            self.logger.debug(f"Using cached calibration curve for {url} -> {cached_path}")
+            return cached_path
+
+        self.logger.info(f"Downloading calibration curve from {url}")
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise RuntimeError(f"Failed to download calibration curve from {url}: {e}") from e
+
+        tmp_path = cached_path + '.tmp'
+        with open(tmp_path, 'wb') as f:
+            f.write(response.content)
+        os.replace(tmp_path, cached_path)
+        self.logger.info(f"Saved calibration curve from {url} -> {cached_path}")
+        return cached_path
 
     def _load_calibration_curve(self, csv_path):
         """ Load a calibration curve from a CSV file and cache it """
