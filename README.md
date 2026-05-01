@@ -189,17 +189,16 @@ setup.address = "/dev/ttyUSB0"
 
 The CSV file should have two columns: `temperature, raw_value`. Pre-configured curves are in `fridgeos/calibration-curves/default/`. To override a curve, place a file with the same name in `fridgeos/calibration-curves/custom/` — custom curves take priority over default ones.
 
-You can also point `conversion_csv` at an `http://` or `https://` URL, and the CSV will be downloaded once and cached under `fridgeos/calibration-curves/downloaded/`:
+You can also point `conversion_csv` at an `http://` or `https://` URL:
 
 ```toml
 [[thermometers]]
 name = "1K"
 hardware = "swarm_diode"
-conversion_csv = "https://raw.githubusercontent.com/amccaugh/thermometer-calibrations/refs/heads/main/D9B4.csv"
-setup.address = "/dev/ttyUSB0"
+conversion_csv = "https://mythermometerfiles.com/my-custom-calibration.csv"
 ```
 
-To force a re-download (e.g. after the upstream curve changes), delete the matching file from `fridgeos/calibration-curves/downloaded/`.
+Each unique URL is re-downloaded during the HAL startup process
 
 ## License
 
