@@ -153,7 +153,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Temperature"
+              "options": "Current"
             },
             "properties": [
               {
@@ -193,6 +193,18 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "View Avg"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "kelvin"
+              }
+            ]
           }
         ]
       },
@@ -219,7 +231,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT ON (sensorname)\n  sensorname AS \"Sensor\",\n  ROUND(temperature::numeric, 2) AS \"Temperature\"\nFROM temperatures\nWHERE time > NOW() - INTERVAL '10 MINUTE'\nORDER BY sensorname, time DESC;",
+          "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (sensorname) sensorname, temperature\n  FROM temperatures\n  WHERE time > NOW() - INTERVAL '10 MINUTE'\n  ORDER BY sensorname, time DESC\n),\naverages AS (\n  SELECT sensorname, AVG(temperature) AS avg_temp\n  FROM temperatures\n  WHERE $__timeFilter(time)\n  GROUP BY sensorname\n)\nSELECT\n  l.sensorname AS \"Sensor\",\n  ROUND(l.temperature::numeric, 2) AS \"Current\",\n  ROUND(a.avg_temp::numeric, 2) AS \"View Avg\"\nFROM latest l\nJOIN averages a ON l.sensorname = a.sensorname\nORDER BY l.sensorname;",
           "refId": "A",
           "select": [
             [
@@ -241,7 +253,7 @@
           ]
         }
       ],
-      "title": "Current Temperatures",
+      "title": "Temperatures",
       "type": "table"
     },
     {
