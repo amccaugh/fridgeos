@@ -111,8 +111,8 @@ class HAL_SIM921():
         return self.thermometer.read_temperature()
     
 class HAL_SIM922():
-    def setup(self, address, slot, channel):
-        self.thermometer = SIM922(address, sim900port=slot, channel=channel)
+    def setup(self, address, slot, channel, use_raw_voltage=False):
+        self.thermometer = SIM922(address, sim900port=slot, channel=channel, use_raw_voltage=use_raw_voltage)
     
     def get_temperature(self):
         return self.thermometer.read_temperature()

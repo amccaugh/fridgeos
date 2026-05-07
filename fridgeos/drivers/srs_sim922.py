@@ -4,8 +4,9 @@ import numpy as np
 class SIM922:
     """Python class for SRS SIM922 quad thermometer inside a SIM900
     mainframe, written by Adam McCaughan"""
-    def __init__(self, serial_address, sim900port, channel):
+    def __init__(self, serial_address, sim900port, channel, use_raw_voltage = False):
         self.serial = serial.Serial(serial_address, timeout = 1, baudrate = 115200)
+        self.use_raw_voltage = use_raw_voltage
         self.sim900port = sim900port
         self.channel = channel
         self.serial.send_break()
@@ -52,7 +53,10 @@ class SIM922:
     def read_temperature(self):
         # In a string, %0.4e converts a number to scientific notation
         self.write('CONN %d,"xyz"' % self.sim900port)
-        v = float(self.query('TVAL? %s' % self.channel))
+        if self.use_raw_voltage:
+            v = float(self.query('VOLT? %s' % self.channel))
+        else:
+            v = float(self.query('TVAL? %s' % self.channel))
         self.write('xyz')
         return v
 
