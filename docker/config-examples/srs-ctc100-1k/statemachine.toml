@@ -1,12 +1,13 @@
 [settings]
-fridge_name = "ryan"
-polling_interval = 3.0    # How often to read temperatures from the HAL
-state_change_password = "ryan"
-# num_consecutive_datapoints_to_transition = 3  # Require N consecutive readings before a transition
+fridge_name = "cryocube testbed"
+polling_interval = 0.5    # How often to read temperatures from the HAL
+# state_change_password = "cryocube"
+num_consecutive_datapoints_to_transition = 3  # Require N consecutive readings before a transition
+
 
 [constants]  # Values that can be used as criteria for transitions
-switch_high_value = 4
-pump_hot_temp = "50 K"
+switch_high_value = 5
+pump_hot_temp = "35 K"
 
 
 [heaters.1K-pump] # This is a PID heater
@@ -24,9 +25,9 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 
 [states.warm]
 1K-pump = 0
-1K-switch = 4
+1K-switch = 0
 [states.warming_up]
-1K-pump = "250 K"
+1K-pump = "290 K"
 1K-switch = 4
 [states.sorption_starting]
 1K-pump = 0
@@ -35,10 +36,10 @@ pid_coefficients = {P = 10, I = 1, D = 0, max_value = 25}
 1K-pump = 0
 1K-switch = "switch_high_value"
 [states.condensing_helium]
-1K-pump = "50 K"
+1K-pump = "pump_hot_temp"
 1K-switch = 0
 [states.recycling]
-1K-pump = "50 K"
+1K-pump = "pump_hot_temp"
 1K-switch = 0
 
 
@@ -52,7 +53,7 @@ from = "warm"
 to = "cold"
 criteria = [
     "1K-pump < 50",
-    "4K < 6",
+    "1K-main-plate < 6",
     "1K < 2",
 ]
 
@@ -60,23 +61,21 @@ criteria = [
 from = "warm"
 to = "recycling"
 criteria = [
-    "1K-pump < 6",
-    "4K < 6",
-    "1K-main-plate < 6",
+    "1K-main-plate < 5",
 ]
 
 [[transitions]]
 from = "recycling"
 to = "condensing_helium"
 criteria = [
-    "1K-pump > 40",
+    "1K-pump > pump_hot_temp",
 ]
 
 [[transitions]]
 from = "condensing_helium"
 to = "sorption_starting"
 criteria = [
-    "1K < 3.25",
+    "1K-main-plate < 3",
 ]
 
 [[transitions]]
@@ -84,7 +83,7 @@ from = "sorption_starting"
 to = "cold"
 criteria = [
     "1K < 1.5",
-    "4K < 4.75",
+    "1K-main-plate < 4",
 ]
 
 [[transitions]]
@@ -99,6 +98,5 @@ criteria = [
 from = ["warming_up", "cold", "condensing_helium", "recycling", "sorption_starting"]
 to = "warm"
 criteria = [
-    "40K > 280",
-    "4K > 275",
+    "1K-main-plate > 275",
 ]
