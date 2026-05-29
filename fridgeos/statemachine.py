@@ -646,10 +646,11 @@ class StateMachineServer:
             })
             
             # Handle timeouts for multiple from states
-            if t.get('max_seconds') is not None:
+            timeout_value = t.get('timeout')
+            if timeout_value is not None:
                 for from_state in from_states:
-                    state_timeouts[(from_state, t['to'])] = t['max_seconds']
-                    self.logger.debug(f"Added timeout for {from_state} -> {t['to']}: {t['max_seconds']}s")
+                    state_timeouts[(from_state, t['to'])] = timeout_value
+                    self.logger.debug(f"Added timeout for {from_state} -> {t['to']}: {timeout_value}s")
         
         self.logger.info(f"Loaded {len(parsed)} transitions")
         return parsed, state_timeouts
@@ -877,10 +878,22 @@ class StateMachineServer:
                         transition_id = id(t)
                     if self._transition_success_streaks.get(transition_id, 0) != 0:
                         self._transition_success_streaks[transition_id] = 0
-                # Check if timeout is exceeded
-                if timeout is not None and now - self.state_entry_time > timeout:
-                    self.logger.info(f'Transition timeout exceeded for {self.current_state} to {t["to"]} after {timeout}s')
-                    return t
+                # Check if timeout is exceeded. If so, force the transition regardless
+                # of whether the temperature criteria were met.
+                if timeout is not None:
+                    elapsed = now - self.state_entry_time
+                    if elapsed > timeout:
+                        self.logger.info(
+                            f'Transition timeout reached for {self.current_state} to {t["to"]}: '
+                            f'time in state ({elapsed:.1f}s) exceeded timeout ({timeout}s); '
+                            f'forcing transition regardless of criteria'
+                        )
+                        return t
+                    else:
+                        self.logger.debug(
+                            f'Transition timeout not yet reached for {self.current_state} to {t["to"]}: '
+                            f'{elapsed:.1f}s / {timeout}s elapsed'
+                        )
         return None
 
     def attempt_transition(self):
