@@ -55,6 +55,27 @@ docker compose up -d
 
 
 
+## State Machine Configuration
+
+States and transitions are defined in `statemachine.toml`. Each state sets target values for the heaters, and `[[transitions]]` blocks define when to move between states:
+
+```toml
+[[transitions]]
+from = "warm"            # source state (or a list of states, e.g. ["cold", "recycling"])
+to = "recycling"         # destination state
+timeout = 300            # optional: force this transition after 300s in the state, even if criteria aren't met
+criteria = [             # all criteria must be true to transition
+    "1K-main-plate < 5",
+    "4K < 6",
+]
+```
+
+Notes:
+- `criteria` use the format `sensor <operator> value`, where `<operator>` is `<` or `>`. The value may be a number or a name from the `[constants]` section.
+- `timeout` (seconds) is optional. When set, the transition fires once the time in the current state exceeds the timeout, regardless of the criteria.
+- Transitions are evaluated in the order they appear, and the first one whose criteria (or timeout) is satisfied is taken.
+- `num_consecutive_datapoints_to_transition` in `[settings]` requires the criteria to hold for N consecutive readings before transitioning (the `timeout` bypasses this).
+
 ## Adding New Hardware Drivers
 
 This tutorial shows how to add support for a new hardware device (e.g., SRS SIM923 temperature controller) to FridgeOS.
