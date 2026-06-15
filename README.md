@@ -63,7 +63,7 @@ States and transitions are defined in `statemachine.toml`. Each state sets targe
 [[transitions]]
 from = "warm"            # source state (or a list of states, e.g. ["cold", "recycling"])
 to = "recycling"         # destination state
-timeout = 300            # optional: force this transition after 300s in the state, even if criteria aren't met
+force_transition_after_seconds = 300            # optional: force this transition after 300s in the state, even if criteria aren't met
 criteria = [             # all criteria must be true to transition
     "1K-main-plate < 5",
     "4K < 6",
@@ -72,9 +72,9 @@ criteria = [             # all criteria must be true to transition
 
 Notes:
 - `criteria` use the format `sensor <operator> value`, where `<operator>` is `<` or `>`. The value may be a number or a name from the `[constants]` section.
-- `timeout` (seconds) is optional. When set, the transition fires once the time in the current state exceeds the timeout, regardless of the criteria.
-- Transitions are evaluated in the order they appear, and the first one whose criteria (or timeout) is satisfied is taken.
-- `num_consecutive_datapoints_to_transition` in `[settings]` requires the criteria to hold for N consecutive readings before transitioning (the `timeout` bypasses this).
+- `force_transition_after_seconds` is optional. When set, the transition fires once the time in the current state exceeds this many seconds, regardless of the criteria.
+- Transitions are evaluated in the order they appear, and the first one whose criteria (or `force_transition_after_seconds`) is satisfied is taken.
+- `num_consecutive_datapoints_to_transition` in `[settings]` requires the criteria to hold for N consecutive readings before transitioning (`force_transition_after_seconds` bypasses this).
 
 ## Adding New Hardware Drivers
 

@@ -645,8 +645,8 @@ class StateMachineServer:
                 'criteria': criteria_list
             })
             
-            # Handle timeouts for multiple from states
-            timeout_value = t.get('timeout')
+            # Handle forced transitions (time-based) for multiple from states
+            timeout_value = t.get('force_transition_after_seconds')
             if timeout_value is not None:
                 for from_state in from_states:
                     state_timeouts[(from_state, t['to'])] = timeout_value

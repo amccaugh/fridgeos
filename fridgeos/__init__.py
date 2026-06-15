@@ -1,6 +1,6 @@
 """FridgeOS - Simple, easy-to-use control software for cryostats"""
 
-__version__ = "1.0.2"
+__version__ = "1.1.0"
 
 from fridgeos.hal import HALServer, HALClient
 from fridgeos.scraper import Scraper, PostgresUploader
