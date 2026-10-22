@@ -32,7 +32,7 @@ from fridgeos import __version__
 import uvicorn
 import requests
 
-# Navigation links shown at the top of the HTML sub-pages
+# Navigation links shown at the top of the HTML pages
 NAV_BAR = """<p><a href="/">Home</a> | <a href="/control">State Control</a> | <a href="/heater/set">Heater Control</a></p>
     <hr>"""
 
@@ -175,6 +175,7 @@ class StateMachineServer:
                 <title>{fridge_name} FridgeOS State Machine</title>
             </head>
             <body>
+                {NAV_BAR}
                 <h2>FridgeOS State Machine Server</h2>
                 <p>Fridge name: {fridge_name}</p>
                 <ul>
