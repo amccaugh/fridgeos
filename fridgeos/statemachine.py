@@ -191,7 +191,7 @@ class StateMachineServer:
                     <li>Control
                         <ul>
                             <li><a href="/control">State Control</a> - Change system state</li>
-                            <li><a href="/heater/set">Heater Control</a> - Change heater values</li>
+                            <li><a href="/heater/set">Heater Control</a> - Change heater values and PID setpoints</li>
                         </ul>
                     </li>
                 </ul>
@@ -368,6 +368,39 @@ class StateMachineServer:
                 self.logger.error(f'Error setting heater value: {e}')
                 raise HTTPException(status_code=500, detail=str(e))
 
+        @self.app.post("/heater/setpoint")
+        async def set_heater_setpoint_endpoint(heater_name: str = Form(...), setpoint: str = Form(...)):
+            """
+            Set the temperature setpoint of a PID heater.
+            """
+            try:
+                try:
+                    setpoint_float = float(setpoint)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail="Setpoint must be a number")
+
+                result = self.set_heater_setpoint(heater_name, setpoint_float)
+                if result:
+                    return HTMLResponse(f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Heater Setpoint Set Successfully</title>
+                    </head>
+                    <body>
+                        {NAV_BAR}
+                        <p>Heater {heater_name} setpoint set to {setpoint_float} K</p>
+                    </body>
+                    </html>
+                    """)
+                else:
+                    raise HTTPException(status_code=400, detail=f"Failed to set setpoint for heater {heater_name} (is it a PID heater?)")
+            except HTTPException:
+                raise
+            except Exception as e:
+                self.logger.error(f'Error setting heater setpoint: {e}')
+                raise HTTPException(status_code=500, detail=str(e))
+
         @self.app.get("/heater/set", response_class=HTMLResponse)
         async def heater_control_page():
             """
@@ -377,7 +410,7 @@ class StateMachineServer:
             
             # Create form for each heater
             heater_forms = ""
-            for heater_name in self.heaters.keys():
+            for heater_name, heater_config in self.heaters.items():
                 current_value = self.current_heater_values.get(heater_name, 0)
                 heater_forms += f"""
                 <p><strong>Heater: {heater_name}</strong></p>
@@ -388,8 +421,23 @@ class StateMachineServer:
                     <input type="number" step="0.1" name="value" id="value_{heater_name}" required>
                     <input type="submit" value="Set Value">
                 </form>
-                <br>
                 """
+                # PID heaters can alternatively be given a temperature setpoint
+                if heater_config['pid']:
+                    if heater_config.get('use_pid', True):
+                        current_setpoint = f"{heater_config['pid_controller'].setpoint} K ({heater_config['corresponding_thermometer']})"
+                    else:
+                        current_setpoint = "none (heater value set directly)"
+                    heater_forms += f"""
+                <p>Current setpoint: {current_setpoint}</p>
+                <form action="/heater/setpoint" method="post">
+                    <input type="hidden" name="heater_name" value="{heater_name}">
+                    <label for="setpoint_{heater_name}">New Setpoint (K):</label>
+                    <input type="number" step="any" name="setpoint" id="setpoint_{heater_name}" required>
+                    <input type="submit" value="Set Setpoint">
+                </form>
+                """
+                heater_forms += "<br>"
             
             return f"""
             <!DOCTYPE html>
@@ -400,7 +448,7 @@ class StateMachineServer:
             <body>
                 {NAV_BAR}
                 <h3>Heater Control</h3>
-                <p>Set individual heater values directly:</p>
+                <p>Set individual heater values directly, or set a temperature setpoint for PID heaters:</p>
                 {heater_forms}
             </body>
             </html>
@@ -1003,6 +1051,23 @@ class StateMachineServer:
         except Exception as e:
             self.logger.error(f"Error setting heater '{heater_name}' to {value}: {e}")
             return False
+
+    def set_heater_setpoint(self, heater_name: str, setpoint: float):
+        """ Set the temperature setpoint of a PID heater and switch it to PID control. """
+        if heater_name not in self.heaters:
+            self.logger.error(f"Heater '{heater_name}' not found")
+            return False
+
+        heater_config = self.heaters[heater_name]
+        if not heater_config['pid']:
+            self.logger.error(f"Heater '{heater_name}' is not a PID heater")
+            return False
+
+        heater_config['pid_controller'].setpoint = setpoint
+        heater_config['use_pid'] = True
+        heater_config.pop('current_value', None)
+        self.logger.info(f"Set PID setpoint for heater '{heater_name}' to {setpoint} K")
+        return True
 
     def update_heaters(self):
         # Get temperatures from HAL Client
