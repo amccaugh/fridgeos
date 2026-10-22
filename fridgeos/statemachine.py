@@ -32,6 +32,10 @@ from fridgeos import __version__
 import uvicorn
 import requests
 
+# Navigation links shown at the top of the HTML sub-pages
+NAV_BAR = """<p><a href="/">Home</a> | <a href="/control">State Control</a> | <a href="/heater/set">Heater Control</a></p>
+    <hr>"""
+
 class StateChangeRequest(BaseModel):
     state: str
     password: Optional[str] = None
@@ -351,8 +355,8 @@ class StateMachineServer:
                         <title>Heater Set Successfully</title>
                     </head>
                     <body>
+                        {NAV_BAR}
                         <p>Heater {heater_name} set to {value_float}</p>
-                        <p><a href="/heater/set">← Back to Heater Control</a> | <a href="/">← Back to Main Page</a></p>
                     </body>
                     </html>
                     """)
@@ -394,8 +398,8 @@ class StateMachineServer:
                 <title>{fridge_name} Heater Control</title>
             </head>
             <body>
+                {NAV_BAR}
                 <h3>Heater Control</h3>
-                <p><a href="/">← Back to main page</a></p>
                 <p>Set individual heater values directly:</p>
                 {heater_forms}
             </body>
@@ -419,6 +423,7 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <h3>FridgeOS State Control</h3>
                     <p>Current state: <strong>{self.current_state}</strong></p>
                     <p>Password required for state changes.</p>
@@ -447,6 +452,7 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <h3>FridgeOS State Control</h3>
                     <p>Current state: <strong>{self.current_state}</strong></p>
                     <p>Available states (click to change to new state):</p>
@@ -471,8 +477,8 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <p>Error: Invalid password</p>
-                    <p><a href="/control">← Back to control page</a></p>
                 </body>
                 </html>
                 """, status_code=401)
@@ -487,8 +493,8 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <p>State changed to <strong>{state}</strong></p>
-                    <p><a href="/control">← Back to control page</a> | <a href="/">← Back to main page</a></p>
                 </body>
                 </html>
                 """)
@@ -500,8 +506,8 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <p>Error: Invalid state <strong>{state}</strong></p>
-                    <p><a href="/control">← Back to control page</a></p>
                 </body>
                 </html>
                 """, status_code=400)
@@ -519,6 +525,7 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <p>Error: Password required for state changes. Please use the <a href="/control">control form</a>.</p>
                 </body>
                 </html>
@@ -534,8 +541,8 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <p>State changed to <strong>{state}</strong></p>
-                    <p><a href="/control">← Back to control page</a> | <a href="/">← Back to main page</a></p>
                 </body>
                 </html>
                 """)
@@ -547,8 +554,8 @@ class StateMachineServer:
                     <title>{fridge_name} FridgeOS State Machine</title>
                 </head>
                 <body>
+                    {NAV_BAR}
                     <p>Error: Invalid state <strong>{state}</strong></p>
-                    <p><a href="/control">← Back to control page</a></p>
                 </body>
                 </html>
                 """, status_code=400)
