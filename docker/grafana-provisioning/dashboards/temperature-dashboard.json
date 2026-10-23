@@ -165,6 +165,21 @@
                 "value": "color-background"
               },
               {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null+nan",
+                      "result": {
+                        "color": "transparent",
+                        "index": 0
+                      }
+                    }
+                  }
+                ]
+              },
+              {
                 "id": "thresholds",
                 "value": {
                   "mode": "absolute",
